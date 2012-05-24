@@ -8,4 +8,4 @@ build:
 
 clean:
 	rm -rf .libs *.lo *.slo *.la *.o
-
+	rm -rf build 

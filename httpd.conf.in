@@ -1,0 +1,13 @@
+# the server
+ServerRoot @BUILD@
+PidFile @BUILD@/httpd.pid
+DocumentRoot @BUILD@
+ErrorLog @BUILD@/error.log
+# the port
+Listen 8000
+# the module
+LoadModule mod_parrot @BUILD@/mod_parrot.so
+# the handler
+<Location "/">
+	SetHandler mod_parrot
+</Location>
