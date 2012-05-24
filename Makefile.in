@@ -1,0 +1,11 @@
+
+mod_parrot.so: build mod_parrot.c 
+	apxs $(LIBS) $(INCLUDES) $(LDPATH) -c mod_parrot.c
+	$(LIBTOOL) --mode=install cp mod_parrot.la $(PWD)/build
+
+build:
+	mkdir build
+
+clean:
+	rm -rf .libs *.lo *.slo *.la *.o
+
