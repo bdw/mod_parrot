@@ -1,8 +1,8 @@
 # the server
-ServerRoot @BUILD@
-PidFile @BUILD@/httpd.pid
-DocumentRoot @BUILD@
-ErrorLog @BUILD@/error.log
+ServerRoot .
+PidFile ./httpd.pid
+DocumentRoot .
+ErrorLog ./error.log
 # the port
 Listen 8000
 # the module

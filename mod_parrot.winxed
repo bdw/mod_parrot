@@ -1,0 +1,5 @@
+function main[main]() {
+	string msg = "Hello, World";
+	say(msg.replace("World", "Parrot"));
+	
+}

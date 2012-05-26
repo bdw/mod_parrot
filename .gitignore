@@ -7,3 +7,6 @@ Makefile
 *.la
 *.a
 *.slo
+httpd.pid
+error.log
+*.pbc

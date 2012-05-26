@@ -77,4 +77,6 @@ memory-inefficient as well as slow, and prohibits HTTP streaming.
 
 The 10th and last assumption means that mod_parrot needs to report errors
 to the apache error log. The level of detail desired may be configured at
-the module level.
+the module level. Within the parrot interpreter, standard error will do
+nicely for this purpose.
+

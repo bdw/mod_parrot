@@ -1,13 +1,12 @@
-#include "httpd.h"
-#include "http_config.h"
-#include "http_protocol.h"
-#include "ap_config.h"
-#include "parrot/api.h"
+#include "mod_parrot.h"
 
-static int mod_parrot_handler(request_rec *rec) {
+static int mod_parrot_handler(request_rec *req) {
 	Parrot_PMC interp;
-	if(Parrot_api_make_interpreter(NULL, 0, NULL, &interp))
+	if(Parrot_api_make_interpreter(NULL, 0, NULL, &interp)) {
+		mod_parrot_run(interp, req);
 		Parrot_api_destroy_interpreter(interp);
+		return OK;
+	}
 	return DECLINED;
 }
 
