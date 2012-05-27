@@ -24,6 +24,10 @@ static void hash_set(Parrot_PMC i, Parrot_PMC h, char * k, char * v) {
 
 
 void mod_parrot_setup_args(Parrot_PMC i, request_rec *req, Parrot_PMC *args) {
+	const apr_array_header_t *array;
+	apr_table_entry_t * entries;
+	int idx;
+
 	*args = new_instance(i, "Hash", NULL);
 
 	hash_set(i, *args, "SERVER_NAME", req->server->server_hostname);
@@ -32,6 +36,14 @@ void mod_parrot_setup_args(Parrot_PMC i, request_rec *req, Parrot_PMC *args) {
 	hash_set(i, *args, "QUERY_STRING", req->args ? req->args : ""); 
 	hash_set(i, *args, "HTTP_HOST", (char*)req->hostname);
 	hash_set(i, *args, "SERVER_PROTOCOL", req->protocol);
+	/*	hash_set(i, *args, "REMOTE_ADDR", req->useragent_ip); */
+	
+	array = apr_table_elts(req->headers_in);
+	entries = (apr_table_entry_t *) array->elts;
+	for(idx = 0; idx < array->nelts; idx++) {
+		hash_set(i, *args, entries[idx].key, entries[idx].val);
+	}
+
 }
 
 void mod_parrot_run(Parrot_PMC i, request_rec *req) {

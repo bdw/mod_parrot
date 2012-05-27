@@ -1,4 +1,7 @@
 function main[main](var args) {
+	var input = getstdin();
+	string msg = input.readall();
+	say(msg.reverse());
 	for(var k in args) {
 		string msg = sprintf("%s: %s", [k, args[k]]);
 		say(msg);

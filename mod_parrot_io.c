@@ -3,6 +3,7 @@
 static Parrot_PMC new_stringhandle(Parrot_PMC interp);
 static void open_stringhandle(Parrot_PMC interp, Parrot_PMC handlePMC, char * mode);
 static Parrot_String read_stringhandle(Parrot_PMC interp, Parrot_PMC handle);
+static void write_stringhandle(Parrot_PMC interp, Parrot_PMC handle, void * buf, size_t size);
 
 static Parrot_PMC new_stringhandle(Parrot_PMC interp) {
 	Parrot_PMC classPMC, keyPMC;
@@ -40,12 +41,22 @@ static Parrot_String read_stringhandle(Parrot_PMC interp, Parrot_PMC handlePMC) 
 	Parrot_api_pmc_find_method(interp, handlePMC, methodName, &methodPMC);
 	Parrot_api_pmc_new_call_object(interp, &callPMC);
 	Parrot_api_pmc_setup_signature(interp, callPMC, "Pi->S", handlePMC);
-	
 	Parrot_api_pmc_invoke(interp, methodPMC, callPMC);
-
 	Parrot_api_pmc_get_keyed_int(interp, callPMC, 0, &resultPMC);
 	Parrot_api_pmc_get_string(interp, resultPMC, &result);
 	return result;
+}
+
+static void write_stringhandle(Parrot_PMC interp, Parrot_PMC handlePMC, void * buffer, size_t size) {
+	Parrot_PMC methodPMC, callPMC;
+	Parrot_String methodName;
+	Parrot_String importedString;
+	Parrot_api_string_import_binary(interp, buffer, size, "binary", &importedString);
+	Parrot_api_string_import_ascii(interp, "puts", &methodName);
+	Parrot_api_pmc_find_method(interp, handlePMC, methodName, &methodPMC);
+	Parrot_api_pmc_new_call_object(interp, &callPMC);
+	Parrot_api_pmc_setup_signature(interp, callPMC, "PiS->I", handlePMC, importedString);
+	Parrot_api_pmc_invoke(interp, methodPMC, callPMC);
 }
 
 void mod_parrot_io_new_input_handle(Parrot_PMC interp, request_rec *r, Parrot_PMC *handle) {
@@ -57,7 +68,17 @@ void mod_parrot_io_new_output_handle(Parrot_PMC interp, request_rec *r, Parrot_P
 }
 
 void mod_parrot_io_read_input_handle(Parrot_PMC interp, request_rec *r, Parrot_PMC handle) {
-	// not yet implemented
+	/* i have no idea why this does not work */
+	char buffer[1024];
+	size_t count;
+	if(ap_setup_client_block(r, REQUEST_CHUNKED_ERROR)) 
+		return;
+	if(ap_should_client_block(r)) {
+		while((count = ap_get_client_block(r, buffer, sizeof(buffer)) > 0)) {
+			write_stringhandle(interp, handle, buffer, count);
+		}
+	}
+
 }
 
 void mod_parrot_io_write_output_handle(Parrot_PMC interp, request_rec *req, Parrot_PMC handle) {
