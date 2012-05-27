@@ -1,3 +1,3 @@
 #!/bin/bash
-kill `cat ./httpd.pid`
+kill -s 3 `cat ./httpd.pid`
 rm -f ./httpd.pid

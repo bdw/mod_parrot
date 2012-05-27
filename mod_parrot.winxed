@@ -1,5 +1,6 @@
-function main[main]() {
-	string msg = "Hello, World";
-	say(msg.replace("World", "Parrot"));
-	
+function main[main](var args) {
+	for(var k in args) {
+		string msg = sprintf("%s: %s", [k, args[k]]);
+		say(msg);
+	}
 }

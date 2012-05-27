@@ -5,6 +5,8 @@ mod_parrot.so: $(COMPILED) $(WINXED)
 	apxs $(LIBS) $(INCLUDES) $(LDPATH) -c $(COMPILED)
 	$(LIBTOOL) --mode=install cp mod_parrot.la $(PWD)/build
 
+%.c: mod_parrot.h
+
 %.pbc: %.pir
 	parrot -o $@ $< 
 	cp $@ build
@@ -13,5 +15,6 @@ mod_parrot.so: $(COMPILED) $(WINXED)
 	winxed -c $<
 
 clean:
-	rm -rf .libs *.lo *.slo *.la *.o
-	rm -rf build 
+	rm -rf .libs *.lo *.slo *.la *.o *.a *.pbc
+
+
