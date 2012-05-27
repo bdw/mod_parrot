@@ -1,7 +1,7 @@
 function main[main](var args) {
 	var input = getstdin();
 	string msg = input.readall();
-	say(msg.reverse());
+	say(sprintf("POST data was %d bytes long", [ length(msg) ]));
 	for(var k in args) {
 		string msg = sprintf("%s: %s", [k, args[k]]);
 		say(msg);

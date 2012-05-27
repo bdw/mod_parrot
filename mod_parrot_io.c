@@ -74,8 +74,10 @@ void mod_parrot_io_read_input_handle(Parrot_PMC interp, request_rec *r, Parrot_P
 	if(ap_setup_client_block(r, REQUEST_CHUNKED_ERROR)) 
 		return;
 	if(ap_should_client_block(r)) {
-		while((count = ap_get_client_block(r, buffer, sizeof(buffer)) > 0)) {
-			write_stringhandle(interp, handle, buffer, count);
+		count = r->remaining;
+		while(ap_get_client_block(r, buffer, sizeof(buffer)) > 0) {
+			write_stringhandle(interp, handle, buffer, count - r->remaining);
+			count = r->remaining;
 		}
 	}
 
