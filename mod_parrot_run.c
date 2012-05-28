@@ -3,6 +3,9 @@
 #include <strings.h>
 #include <ctype.h>
 
+
+/* Some of the methods below should be in mod_parrot_util.c. */
+
 static Parrot_PMC new_instance(Parrot_PMC i, char * class, Parrot_PMC initPMC) {
 	Parrot_PMC classPMC, keyPMC;
 	Parrot_String className;
@@ -26,7 +29,11 @@ static void hash_set(Parrot_PMC i, Parrot_PMC h, char * k, char * v) {
 
 static char * header_convert(apr_pool_t *pool, char * header)  {
 	int idx;
-	char * word = apr_pstrcat(pool, "HTTP_", header, NULL);
+	char * word;
+	word = (strncasecmp("content", header, 7) ? 
+			apr_pstrcat(pool, "HTTP_", header, NULL) :
+			apr_pstrdup(pool, header));
+
 	for(idx = 0; word[idx]; idx++) {
 		if(isalpha(word[idx]) && islower(word[idx]))
 			word[idx] = toupper(word[idx]);
@@ -52,12 +59,16 @@ void mod_parrot_setup_args(Parrot_PMC i, request_rec *req, Parrot_PMC *args) {
 	hash_set(i, *args, "REQUEST_METHOD", (char*)req->method);
 	hash_set(i, *args, "REQUEST_URI", req->unparsed_uri);
 	hash_set(i, *args, "QUERY_STRING", req->args ? req->args : ""); 
-	hash_set(i, *args, "HTTP_HOST", (char*)req->hostname);
+	hash_set(i, *args, "HTTP_HOST", (char*)req->hostname); 
 	hash_set(i, *args, "SERVER_NAME", req->server->server_hostname);
 	hash_set(i, *args, "SERVER_PROTOCOL", req->protocol);
+
+
 	/* Network parameters. This should be simpler, but it isn't. */
-	hash_set(i, *args, "SERVER_ADDR", ipaddr(req->connection->local_addr));
+			 hash_set(i, *args, "SERVER_ADDR", ipaddr(req->connection->local_addr));
 	hash_set(i, *args, "SERVER_PORT", apr_itoa(req->pool, req->connection->local_addr->port));
+
+
 	hash_set(i, *args, "REMOTE_ADDR", ipaddr(req->connection->remote_addr));
 	hash_set(i, *args, "REMOTE_PORT", apr_itoa(req->pool, req->connection->remote_addr->port));
 

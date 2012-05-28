@@ -42,9 +42,8 @@ my $dir = $info{PWD} . '/build';
 mkdir $dir unless -d $dir;
 
 open $in, '<', 'httpd.conf.in';
-open $out, '>', $dir . '/httpd.conf';
+open $out, '>', $dir . '/httpd.conf' or die "Could not write httpd.conf";
 my $httpdconf = do { local $/ = <$in> };
-
 $httpdconf =~ s/\@BUILD\@/$dir/g;
 print $out $httpdconf;
 close $in;

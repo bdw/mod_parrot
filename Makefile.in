@@ -15,6 +15,6 @@ mod_parrot.so: $(COMPILED) $(WINXED)
 	winxed -c $<
 
 clean:
-	rm -rf .libs *.lo *.slo *.la *.o *.a *.pbc
+	rm -rf .libs *.lo *.slo *.la *.o *.a *.pbc *.so
 
 

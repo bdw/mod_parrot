@@ -68,13 +68,18 @@ void mod_parrot_io_new_output_handle(Parrot_PMC interp, request_rec *r, Parrot_P
 }
 
 void mod_parrot_io_read_input_handle(Parrot_PMC interp, request_rec *r, Parrot_PMC handle) {
-	/* i have no idea why this does not work */
 	char buffer[1024];
 	size_t count;
 	if(ap_setup_client_block(r, REQUEST_CHUNKED_ERROR)) 
 		return;
 	if(ap_should_client_block(r)) {
 		count = r->remaining;
+		/* current (post-2.4) apache doumentation will tell you that
+		 * ap_get_client_block returns the number of bytes read (if
+		 * everything is correct, that is). For apache 2.2, which is what I
+		 * use for development, it simply returns 1 in case of success.
+		 * Hence, the amount of bytes read should be deducted from the
+		 * difference in remaining bytes between successive calls */
 		while(ap_get_client_block(r, buffer, sizeof(buffer)) > 0) {
 			write_stringhandle(interp, handle, buffer, count - r->remaining);
 			count = r->remaining;
@@ -83,6 +88,11 @@ void mod_parrot_io_read_input_handle(Parrot_PMC interp, request_rec *r, Parrot_P
 
 }
 
+
+/**
+ * This will obviously be an awesome routine one day.
+ * Right now it assumes stringhandles.
+ **/
 void mod_parrot_io_write_output_handle(Parrot_PMC interp, request_rec *req, Parrot_PMC handle) {
 	Parrot_String output;
 	Parrot_Int length;
