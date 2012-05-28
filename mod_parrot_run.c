@@ -1,5 +1,7 @@
 #include "mod_parrot.h"
-#include <stdio.h>
+#include "apr_strings.h"
+#include <strings.h>
+#include <ctype.h>
 
 static Parrot_PMC new_instance(Parrot_PMC i, char * class, Parrot_PMC initPMC) {
 	Parrot_PMC classPMC, keyPMC;
@@ -22,6 +24,17 @@ static void hash_set(Parrot_PMC i, Parrot_PMC h, char * k, char * v) {
 	Parrot_api_pmc_set_keyed_string(i, h, kS, vP);
 }
 
+static char * header_convert(apr_pool_t *pool, char * header)  {
+	int idx;
+	char * word = apr_pstrcat(pool, "HTTP_", header, NULL);
+	for(idx = 0; word[idx]; idx++) {
+		if(isalpha(word[idx]) && islower(word[idx]))
+			word[idx] = toupper(word[idx]);
+		else if(!isalnum(word[idx]))
+			word[idx] = '_';
+	}
+	return word;
+}
 
 void mod_parrot_setup_args(Parrot_PMC i, request_rec *req, Parrot_PMC *args) {
 	const apr_array_header_t *array;
@@ -41,7 +54,9 @@ void mod_parrot_setup_args(Parrot_PMC i, request_rec *req, Parrot_PMC *args) {
 	array = apr_table_elts(req->headers_in);
 	entries = (apr_table_entry_t *) array->elts;
 	for(idx = 0; idx < array->nelts; idx++) {
-		hash_set(i, *args, entries[idx].key, entries[idx].val);
+		if(!strcasecmp(entries[idx].key, "host"))
+			continue;
+		hash_set(i, *args, header_convert(req->pool, entries[idx].key), entries[idx].val);
 	}
 
 }

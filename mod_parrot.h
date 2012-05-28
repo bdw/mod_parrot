@@ -2,6 +2,7 @@
 #include "http_config.h"
 #include "http_protocol.h"
 #include "ap_config.h"
+#include "apr.h"
 #include "parrot/api.h"
 #include <unistd.h>
 
