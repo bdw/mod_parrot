@@ -36,21 +36,36 @@ static char * header_convert(apr_pool_t *pool, char * header)  {
 	return word;
 }
 
+static char * ipaddr(apr_sockaddr_t *a) {
+	char * string;
+	apr_sockaddr_ip_get(&string, a);
+	return string;
+}
+
 void mod_parrot_setup_args(Parrot_PMC i, request_rec *req, Parrot_PMC *args) {
 	const apr_array_header_t *array;
 	apr_table_entry_t * entries;
 	int idx;
 
 	*args = new_instance(i, "Hash", NULL);
-
-	hash_set(i, *args, "SERVER_NAME", req->server->server_hostname);
+	
 	hash_set(i, *args, "REQUEST_METHOD", (char*)req->method);
 	hash_set(i, *args, "REQUEST_URI", req->unparsed_uri);
 	hash_set(i, *args, "QUERY_STRING", req->args ? req->args : ""); 
 	hash_set(i, *args, "HTTP_HOST", (char*)req->hostname);
+	hash_set(i, *args, "SERVER_NAME", req->server->server_hostname);
 	hash_set(i, *args, "SERVER_PROTOCOL", req->protocol);
-	/*	hash_set(i, *args, "REMOTE_ADDR", req->useragent_ip); */
-	
+	/* Network parameters. This should be simpler, but it isn't. */
+	hash_set(i, *args, "SERVER_ADDR", ipaddr(req->connection->local_addr));
+	hash_set(i, *args, "SERVER_PORT", apr_itoa(req->pool, req->connection->local_addr->port));
+	hash_set(i, *args, "REMOTE_ADDR", ipaddr(req->connection->remote_addr));
+	hash_set(i, *args, "REMOTE_PORT", apr_itoa(req->pool, req->connection->remote_addr->port));
+
+	if(req->server->server_admin) /* I don't believe this is ever NULL, but anyway */
+		hash_set(i, *args, "SERVER_ADMIN", req->server->server_admin);
+
+	/* Read headers. It may be worthwhile to extract this into its' own
+	 * routine, but I do not know how general it really is */
 	array = apr_table_elts(req->headers_in);
 	entries = (apr_table_entry_t *) array->elts;
 	for(idx = 0; idx < array->nelts; idx++) {
