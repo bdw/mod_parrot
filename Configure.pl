@@ -1,7 +1,21 @@
 #!/usr/bin/perl
 use strict;
 use warnings;
-	
+
+sub find_alternative {
+    my ($names, $directories) = @_;
+    for my $d (@$directories) {
+        for my $n (@$names) {
+            my $f = $d . '/' . $n;
+            return $f if -x $f;
+        }
+    }
+}
+
+my $apxs = find_alternative(['apxs','apxs2'], ['/usr/bin']);
+my $httpd = find_alternative(['httpd', 'apache2'], ['/usr/bin','/usr/sbin','/sbin']);
+my $bash = find_alternative(['sh','bash'], ['/bin','/usr/bin']);
+
 # todo: clean this up into something that doesn't look like a total hack
 my %flags = ( 
 	'-l' => 'LIBS',
@@ -10,8 +24,10 @@ my %flags = (
 );
 
 my %info = (
-	LIBTOOL => `apxs -q LIBTOOL`,
-	PWD => `pwd`
+	LIBTOOL => `$apxs -q LIBTOOL`,
+	PWD => `pwd`,
+    APXS => $apxs,
+    HTTPD => $httpd
 );
 
 my $cflags = `parrot_config embed-cflags`;
@@ -29,8 +45,10 @@ for my $flag (keys(%flags)) {
 }
 
 for my $key (keys(%info)) {
-	print $out $key,'=',$info{$key};
+	print $out $key,'=',$info{$key}, "\n";
 }
+
+
 
 my $makefile = do { local $/ = <$in> };
 print $out $makefile;
@@ -50,6 +68,18 @@ print $out $httpdconf;
 close $in;
 close $out;
 
+open $in, '<', 'start-server.sh.in';
+my $starserver = do {  local $/ = <$in> };
+
+open $out, '>', 'start-server.sh';
+
+print $out '#!'.$bash."\n";
+for my $key (keys(%info)) {
+	print $out $key,'="',$info{$key}, "\"\n";
+}
+print $out $starserver;
+close $in;
+close $out;
 print "Type make to build\n";
 
 
