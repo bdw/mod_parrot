@@ -53,6 +53,8 @@ void mod_parrot_setup_args(Parrot_PMC i, request_rec *req, Parrot_PMC *args) {
 	hash_set(i, *args, "REQUEST_URI", req->unparsed_uri);
 	hash_set(i, *args, "QUERY_STRING", req->args ? req->args : ""); 
 	hash_set(i, *args, "HTTP_HOST", (char*)req->hostname);
+    hash_set(i, *args, "SCRIPT_NAME", req->filename);
+    hash_set(i, *args, "PATH_INFO", req->path_info);
 	hash_set(i, *args, "SERVER_NAME", req->server->server_hostname);
 	hash_set(i, *args, "SERVER_PROTOCOL", req->protocol);
 	/* Network parameters. This should be simpler, but it isn't. */
@@ -92,8 +94,9 @@ void mod_parrot_run(Parrot_PMC i, request_rec *req) {
 	
 	Parrot_api_string_import_ascii(i, "mod_parrot.pbc", &fileName);
 	Parrot_api_load_bytecode_file(i, fileName, &bytecodePMC);
-	
-	Parrot_api_run_bytecode(i, bytecodePMC, argumentsPMC);
-	
+
+    Parrot_api_run_bytecode(i, bytecodePMC, argumentsPMC);
 	mod_parrot_io_write_output_handle(i, req, outputPMC);
+
+
 }

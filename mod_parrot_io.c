@@ -93,3 +93,8 @@ void mod_parrot_io_write_output_handle(Parrot_PMC interp, request_rec *req, Parr
 	ap_rwrite(buffer, length, req);
 	Parrot_api_string_free_exported_ascii(interp, buffer);
 }
+
+void mod_parrot_io_report_error(Parrot_PMC interp, request_rec *req) {
+    req->content_type = "text/plain";
+    ap_rputs(  "there was an error clearly", req);
+}

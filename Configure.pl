@@ -80,6 +80,8 @@ for my $key (keys(%info)) {
 print $out $starserver;
 close $in;
 close $out;
+chmod 0755, 'start-server.sh';
+
 print "Type make to build\n";
 
 
