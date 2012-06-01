@@ -1,8 +1,7 @@
 function main[main](var args) {
     try {
-        var os = new 'OS'();
-		say(os.cwd());
-        cgiRun(args['SCRIPT_NAME'], args);
+		loadlib('os');
+		var os = new ['OS']();	
     } catch(e) { say(e.message); }
 }
 
