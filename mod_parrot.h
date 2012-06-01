@@ -11,6 +11,7 @@ void mod_parrot_io_new_output_handle(Parrot_PMC interp, request_rec *req, Parrot
 
 void mod_parrot_io_read_input_handle(Parrot_PMC interp, request_rec *req, Parrot_PMC handle);
 void mod_parrot_io_write_output_handle(Parrot_PMC interp, request_rec *req, Parrot_PMC handle);
+void mod_parrot_io_report_error(Parrot_PMC interp, request_rec *req);
 
 void mod_parrot_run(Parrot_PMC interp, request_rec *req);
 void mod_parrot_setup_args(Parrot_PMC interp, request_rec *req, Parrot_PMC *args);

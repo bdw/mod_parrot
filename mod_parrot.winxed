@@ -1,7 +1,32 @@
 function main[main](var args) {
+    try {
+        var os = new 'OS'();
+		say(os.cwd());
+        cgiRun(args['SCRIPT_NAME'], args);
+    } catch(e) { say(e.message); }
+}
+
+function getBytecode(string fileName) {
+	var handle = new 'FileHandle'();
+	handle.open(fileName, "r");
+	string source = handle.readall();
+	return	compiler.compile(source);
+}
+
+function cgiRun(string fileName, var args) {
+	var bytecode = getBytecode(fileName);
+    return;
+	var mainSub = bytecode.main_sub();
+	say("starting script");
+	mainSub({});
+}
+
+function debugRequest(args) {
 	var input = getstdin();
-	string msg = input.readall();
-	say(sprintf("POST data was %d bytes long", [ length(msg) ]));
+	if(!input.isatty()) {
+		string msg = input.readall();
+		say(sprintf("POST data was %d bytes long", [ length(msg) ]));
+	}
 	for(var k in args) {
 		string msg = sprintf("%s: %s", [k, args[k]]);
 		say(msg);
