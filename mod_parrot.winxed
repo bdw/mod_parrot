@@ -1,23 +1,42 @@
 function main[main](var args) {
     try {
-		var compiler = compreg('winxed');
-		say(typeof(compiler));
-    } catch(e) { say(e.message); }
+		load_language('winxed');
+		loadlib('os');
+		var os = new 'OS'();
+		string fileName = args['SCRIPT_NAME'];
+		if(os.exists(fileName) && os.can_read(fileName)) {
+			cgiRun(fileName, args);
+		} else {
+			say(sprintf("Could not resolve %s", [fileName]));
+			debugRequest(args);
+		}
+    } catch(e) { 
+		say(e.message); 
+		var bt = e.backtrace();
+		for(int i = 0; i < elements(bt); i++) {
+			var sub = bt[i]['sub'];
+			var annotations = bt[i]['annotations'];
+			if(sub != null)
+				say(string(sub));
+			for(var n in annotations)
+				say(sprintf("%s: %s", [n, annotations[n]]));
+		}	
+	}	
 }
 
 function getBytecode(string fileName) {
 	var handle = new 'FileHandle'();
 	handle.open(fileName, "r");
 	string source = handle.readall();
-	return	compiler.compile(source);
+	var compiler = compreg('winxed');	
+	var result = compiler.compile(source);
+	return result;
 }
 
 function cgiRun(string fileName, var args) {
 	var bytecode = getBytecode(fileName);
-    return;
 	var mainSub = bytecode.main_sub();
-	say("starting script");
-	mainSub({});
+	mainSub([ fileName ]);
 }
 
 function debugRequest(args) {
