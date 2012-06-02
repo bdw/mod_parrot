@@ -1,6 +1,7 @@
 #!/usr/bin/perl
 use strict;
 use warnings;
+use Data::Dumper;
 
 sub find_alternative {
     my ($names, $directories) = @_;
@@ -12,9 +13,30 @@ sub find_alternative {
     }
 }
 
-my $apxs = find_alternative(['apxs','apxs2'], ['/usr/bin', '/usr/sbin']);
-my $httpd = find_alternative(['httpd', 'apache2'], ['/usr/bin','/usr/sbin','/sbin']);
-my $bash = find_alternative(['sh','bash'], ['/bin','/usr/bin']);
+sub write_defines {
+	my ($filename, %values) = @_;
+	open my $out, '>', $filename;
+	local $\ = "\n";
+	printf $out "#define %s \"%s\"\n", $_, $values{$_} for (keys %values);
+	close $out;
+}
+
+my @PATH = split(/:/, $ENV{PATH});
+my $apxs = find_alternative(['apxs','apxs2'], [@PATH, '/usr/sbin']);
+my $httpd = find_alternative(['httpd', 'apache2'], [@PATH,'/usr/sbin','/sbin']);
+my $bash = find_alternative(['sh','bash'], \@PATH);
+my $parrot_config = find_alternative(['parrot_config'], \@PATH);
+
+
+# write the configuration header file
+my %config = (
+	LIBDIR => `parrot_config libdir`,
+	VERSIONDIR => `parrot_config versiondir`,
+	BUILD_DIR => `parrot_config build_dir`,
+);
+chomp $config{$_} for (keys %config);
+
+write_defines('config.h', %config);
 
 # todo: clean this up into something that doesn't look like a total hack
 my %flags = ( 
@@ -29,6 +51,9 @@ my %info = (
     APXS => $apxs,
     HTTPD => $httpd
 );
+
+chomp $info{$_} for (keys %info);
+
 
 my $cflags = `parrot_config embed-cflags`;
 my $ldflags = `parrot_config embed-ldflags`;

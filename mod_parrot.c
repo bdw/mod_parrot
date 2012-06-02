@@ -2,11 +2,12 @@
 
 static int mod_parrot_handler(request_rec *req) {
 	Parrot_PMC interp;
-	if(Parrot_api_make_interpreter(NULL, 0, NULL, &interp)) {
-		mod_parrot_run(interp, req);
-		Parrot_api_destroy_interpreter(interp);
-		return OK;
-	}
+	
+	mod_parrot_interpreter(&interp);
+	mod_parrot_run(interp, req);
+	Parrot_api_destroy_interpreter(interp);
+	return OK;
+	
 	return DECLINED;
 }
 

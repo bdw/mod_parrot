@@ -89,6 +89,17 @@ void mod_parrot_setup_args(Parrot_PMC i, request_rec *req, Parrot_PMC *args) {
 
 }
 
+void mod_parrot_interpreter(Parrot_PMC *interp) {
+	Parrot_PMC configHash;
+	Parrot_api_make_interpreter(NULL, 0, NULL, interp);
+	configHash = new_instance(*interp, "Hash", NULL);
+	hash_set(*interp, configHash, "build_dir", BUILD_DIR);
+	hash_set(*interp, configHash, "versiondir", VERSIONDIR);
+	hash_set(*interp, configHash, "libdir", LIBDIR);
+	Parrot_api_set_configuration_hash(*interp, configHash);
+}
+
+
 void mod_parrot_run(Parrot_PMC i, request_rec *req) {
 	Parrot_PMC bytecodePMC, argumentsPMC;
 	Parrot_PMC inputPMC, outputPMC;

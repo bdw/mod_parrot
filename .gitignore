@@ -11,3 +11,4 @@ httpd.pid
 error.log
 *.pbc
 start-server.sh
+config.h

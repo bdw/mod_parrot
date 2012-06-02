@@ -2,6 +2,7 @@ function main[main](var args) {
     try {
 		loadlib('os');
 		var os = new ['OS']();	
+		say(os.cwd());
     } catch(e) { say(e.message); }
 }
 
