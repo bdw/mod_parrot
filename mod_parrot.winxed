@@ -1,8 +1,7 @@
 function main[main](var args) {
     try {
-		loadlib('os');
-		var os = new ['OS']();	
-		say(os.cwd());
+		var compiler = compreg('winxed');
+		say(typeof(compiler));
     } catch(e) { say(e.message); }
 }
 
