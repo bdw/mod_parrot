@@ -89,6 +89,12 @@ void mod_parrot_setup_args(Parrot_PMC i, request_rec *req, Parrot_PMC *args) {
 
 }
 
+void mod_parrot_function(requqest_rec);
+
+void mod_parrot_function(request_rec * req, void * ptr, int i) {
+	ap_rprintf(req, "Asked to write %d bytes\n", i);
+}
+
 void mod_parrot_interpreter(Parrot_PMC *interp) {
 	Parrot_PMC configHash, pir, pasm;
 	Parrot_api_make_interpreter(NULL, 0, NULL, interp);
@@ -107,11 +113,13 @@ void mod_parrot_run(Parrot_PMC i, request_rec *req) {
 	Parrot_PMC inputPMC, outputPMC;
 	Parrot_PMC stdinPMC, stdoutPMC;
 	Parrot_String fileName;
+	printf("Interpreter: %X\nRequest pointer: %X\n", i, req);
 	mod_parrot_io_new_input_handle(i, req, &inputPMC);
 	mod_parrot_io_new_output_handle(i, req, &outputPMC);
 	mod_parrot_io_read_input_handle(i, req, inputPMC);
 
-	mod_parrot_setup_args(i, req, &argumentsPMC);
+	//mod_parrot_setup_args(i, req, &argumentsPMC);
+	Parrot_api_wrap_pointer(i, req, sizeof(*req), &argumentsPMC);
 
 	Parrot_api_set_stdhandle(i, inputPMC, 0, &stdinPMC);
 	Parrot_api_set_stdhandle(i, outputPMC, 1, &stdoutPMC);
