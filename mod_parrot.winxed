@@ -36,15 +36,12 @@ function getBytecode(string fileName) {
 	handle.open(fileName, "r");
 	string source = handle.readall();
 	var compiler = compreg('winxed');	
-	var result = compiler.compile(source, "pir");
-	var pir = compreg('PIR');
+	var result = compiler.compile(source);
 	return result;
 }
 
 function cgiRun(string fileName, var args) {
 	var bytecode = getBytecode(fileName);
-	say(typeof(bytecode));
-	return;
 	var mainSub = bytecode.main_sub();
 	mainSub([ fileName ]);
 }
