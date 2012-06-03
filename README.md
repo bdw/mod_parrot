@@ -30,3 +30,5 @@ Parrot should be >= 4.4.0 as I require some of the newer embedding api
 functions. Httpd should be >= 2.2, It might work on 2.0, but I have not
 tested.
 
+For the inside_out branch, you must have build parrot with libffi, because
+otherwise I cannot call apache functions with more than one argument.

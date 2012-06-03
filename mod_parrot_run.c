@@ -89,10 +89,17 @@ void mod_parrot_setup_args(Parrot_PMC i, request_rec *req, Parrot_PMC *args) {
 
 }
 
-void mod_parrot_function(requqest_rec);
+void mod_parrot_function(request_rec*, Parrot_PMC interp, Parrot_PMC data);
 
-void mod_parrot_function(request_rec * req, void * ptr, int i) {
-	ap_rprintf(req, "Asked to write %d bytes\n", i);
+void mod_parrot_function(request_rec * req, Parrot_PMC interp, Parrot_PMC data) {
+	Parrot_String str;
+	Parrot_Int size;
+	char * buffer;
+	Parrot_api_pmc_get_string(interp, data, &str);
+	Parrot_api_string_export_ascii(interp, str, &buffer);
+	Parrot_api_string_byte_length(interp, str, &size);
+	ap_rwrite(buffer, size, req);
+	Parrot_api_string_free_exported_ascii(interp, buffer);
 }
 
 void mod_parrot_interpreter(Parrot_PMC *interp) {

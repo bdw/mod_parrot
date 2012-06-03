@@ -1,8 +1,8 @@
 function main[main](var args) {
 	try {
-		var func = dlfunc(null, "mod_parrot_function", "vppi");
+		var func = dlfunc(null, "mod_parrot_function", "vpPP");
 		var interp = getinterp();
-		func(args, "foobar", 6);
+		func(args, interp, "foobar\n");
 	} catch(e) { say(e.message); }
 	return;
 }
