@@ -1,9 +1,16 @@
 function main[main](var args) {
     try {
+		if(compreg("PIR") == null) {
+			say("Dead as a PIR");
+			debugRequest(args);
+		} else {
+			say("PIR Lives");
+		}
 		load_language('winxed');
 		loadlib('os');
 		var os = new 'OS'();
-		string fileName = args['SCRIPT_NAME'];
+		string fileName = args['SCRIPT_NAME']; 
+		fileName = 'foobar.winxed';
 		if(os.exists(fileName) && os.can_read(fileName)) {
 			cgiRun(fileName, args);
 		} else {
@@ -29,12 +36,15 @@ function getBytecode(string fileName) {
 	handle.open(fileName, "r");
 	string source = handle.readall();
 	var compiler = compreg('winxed');	
-	var result = compiler.compile(source);
+	var result = compiler.compile(source, "pir");
+	var pir = compreg('PIR');
 	return result;
 }
 
 function cgiRun(string fileName, var args) {
 	var bytecode = getBytecode(fileName);
+	say(typeof(bytecode));
+	return;
 	var mainSub = bytecode.main_sub();
 	mainSub([ fileName ]);
 }

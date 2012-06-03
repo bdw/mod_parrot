@@ -1,18 +1,14 @@
 # So much to do!
 
-- setup search paths 
-	* the concatenation of `parrot_config libdir`, `parrot_config versiondir` and several
-	  other directories will do for this purpose. Create a Hash PMC and set it up with 
-	  Parrot_api_set_config_hash(interp, hash); I might need to devise some way to insert
-	  those values into my C build ; a config.h header file would do.
-
 - loading hll compilers and executing them (see mod_bart)
+    This has hanged on the winxed compiler failing in embedded context, not
+	sure why. It will be debugged
 
 - execption and error logging 
 	as I've found out, this can be done in winxed. It's easy to keep it there, but
 	that would mean that everybody who would supply their own 'loader' pbc would
 	have to handle errors themselves as well or possibly risk crashing the interpreter.
-	And not have pretty errors.
+	And not have pretty errors. 
 
 - cleanup makefile (use the relation between .lo and .c)
 	This means figuring out libtool a bit more, and apxs. The advantage of my current 
