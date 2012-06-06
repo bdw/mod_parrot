@@ -1,8 +1,9 @@
-function main[main](var args) {
+function main[main](var request) {
 	try {
-		var func = dlfunc(null, "mod_parrot_function", "vpPP");
-		var interp = getinterp();
-		func(args, interp, "foobar\n");
+		var func = dlfunc(null, "ap_rwrite", "vpip");
+		var buf = new ['ByteBuffer'];
+		buf =: "hello, ap_rwrite!\n";
+		func(buf, elements(buf), request);
 	} catch(e) { say(e.message); }
 	return;
 }
