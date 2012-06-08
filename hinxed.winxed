@@ -1,0 +1,64 @@
+// hinxed.winxed
+// html-like templated winxed
+
+function genblock(var out, string blockcontent)
+{
+    out.print("{ print(\"");
+    out.print(escape(blockcontent));
+    out.print("\"); }\n");
+}
+
+function gencode(var out, string code)
+{
+    out.print("\n");
+    out.print(code);
+    out.print("\n");
+}
+
+function main [main](var argv)
+{
+    string filename = argv[1];
+    var file = open(filename);
+    file.encoding("utf8");
+    var templ = file.readall();
+    file.close();
+
+    string genfuncname = "hinxed_test";
+
+    const string TAG = "<?hinxed";
+    const string TAGEND = "?>";
+
+    var out = new ["StringHandle"];
+    out.encoding("utf8");
+    out.open("test", "w");
+
+    // Read template and generate winxed source.
+
+    out.print("function " + string(genfuncname) + "()\n{\n");
+
+    int p = 0, prev = 0;
+    while ((p = indexof(templ, TAG, prev)) >= 0) {
+       genblock(out, substr(templ, prev, p - prev));
+       p += length(TAG);
+       int pend = indexof(templ, TAGEND, p);
+       if (pend < 0)
+           throw "Unclosed hinxed tag";
+       gencode(out, substr(templ, p, pend - p));
+       prev = pend + length(TAGEND);
+    }
+    genblock(out, (substr(templ, prev)));
+    out.print("}\n");
+    out.close();
+    out.open("test");
+    string code = out.readall();
+    out.close();
+
+    // Compile winxed source to packfile
+
+    var winxed = load_language("winxed");
+    var object = winxed.compile(code, "pbc": [named("target")] );
+
+    // And run
+    var entry = object.all_subs()[0];
+    entry();
+}
