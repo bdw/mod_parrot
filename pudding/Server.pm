@@ -55,6 +55,7 @@ sub new {
     }, $class;
 }
 
+
 =head2 Start the web server.
 
 Starts the web server, creating the paths and configuration files if
@@ -93,19 +94,21 @@ zombie. TODO: add this to the END{} block, probably.
 
 =cut
 sub stop {
-	my $self = shift;
+	my ($self, $result) = (shift);
 	kill "SIGQUIT", $self->{Pid};
-	unlink $self->{PidFile};	
+    $result = wait;
+    unlink $self->{PidFile} if -f $self->{PidFile};	
 }
 
 =head2 Get the error log
 
-Read the error log as lines.
+Read the error log nas lines.
 
 =cut
 sub errors {
 	my $self = shift;
     return read_file($self->{ErrorLog});
 }
+
 
 1;
