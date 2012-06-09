@@ -1,6 +1,0 @@
-
-if [ -f ./httpd.pid ]; then
-	. ./stop-server.sh
-fi
-$HTTPD -d ./build -f ./httpd.conf -X &
-sleep 1;

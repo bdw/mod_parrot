@@ -4,8 +4,26 @@ use strict;
 
 use Server;
 use Client;
-use Cwd qw(getcwd abs_path);
-use File::Path;
+use Data::Dumper;
+use Carp;
 
-my $server = Server->start(ServerRoot => (getcwd() . '/../serve/'));
+
+
+
+my $server = Server->new();
+$server->start();
+$server->serve('index.html', <<INDEX
+               <html>
+                 <head>
+                 </head>
+               <body>
+               <p>Hello, world</p>
+               <body>
+               </html>
+INDEX
+);
+my $client = Client->new($server);
+$client->is_ok('index.html') or carp('index does not exist');
+$client->is_status('foobar.html', 404) or carp('there is a foobar.html');
+
 $server->stop();

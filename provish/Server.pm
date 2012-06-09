@@ -1,11 +1,19 @@
 #!/usr/bin/perl
+package Server;
 use strict;
 use warnings;
-package Server;
 use File::Copy;
+use File::Basename;
+use File::Slurp;
 use Cwd;
 use File::Path qw/make_path/;
-use Slurp;
+
+=head1 Apache as an object.
+
+This class implements a simple interface to apache, so it can be
+tested against by script.
+
+=cut
 
 sub writeconf {
 	my %conf = @_;
@@ -19,47 +27,85 @@ sub writeconf {
 }
 
 sub startprocess {
-	my %conf = @_;
-	print $conf{ServerRoot}, "\n";
-	qx/httpd -d $conf{ServerRoot}-f $conf{File} -X/;
-	Slurp::to_scalar($conf{PidFile});
+    my $self = shift;
+    exec('httpd', '-d', $self->{ServerRoot}, '-f', $self->{File}, '-X') 
+        unless my $pid = fork();
+    sleep(1); return $pid;
 }
 
-=head2 Start the web server, returning the instance
+=head2 Initialize the web server
+
+Takes the ServerRoot directory as its single optional argument.  If
+none is given the current working directory is assumed.  From the
+directory, the DocumentRoot, PidFile and ErrorLog arguments are also
+assumed.
+
+TODO: Add the executable name to the argument. It is important.
+=cut
+
+sub new {
+    my $class = shift;
+    my $directory = shift || getcwd();
+    bless {
+        ServerRoot => $directory,
+        PidFile => $directory . '/httpd.pid',
+        DocumentRoot => $directory . '/docs',
+        ErrorLog => $directory . '/error.log',
+        Listen => 8000,
+    }, $class;
+}
+
+=head2 Start the web server.
+
+Starts the web server, creating the paths and configuration files if
+nececcary. It uses fork() and exec() so I will not be a bit surprised
+if it fails on windows.
 
 =cut
 
 sub start {
-    my ($class, %conf) = @_;
-	$conf{ServerRoot} ||= getcwd();
-	$conf{PidFile} ||= $conf{ServerRoot} . '/httpd.pid';
-	$conf{DocumentRoot} ||= $conf{ServerRoot} . '/docs'; 
-	$conf{ErrorLog} ||= $conf{ServerRoot} . '/error.log';
-	$conf{Listen} ||= 8000;
-	make_path($conf{DocumentRoot}) unless -d $conf{DocumentRoot};
-	$conf{File} = writeconf(%conf);
-	$conf{Pid} = startprocess(%conf);	
-	bless \%conf, $class;
+    my $self = shift;
+	make_path($self->{DocumentRoot}) unless -d $self->{DocumentRoot};
+	$self->{File} = writeconf(%$self);
+	$self->{Pid} = startprocess($self);	
 }
 
+=head2 Serve a file (allowing it to be tested)
+
+Pass it either the name of an existing file or a new file name with
+supplied contents. The served file will be placed in DocumentRoot.
+
+=cut
 
 sub serve {
-	my ($self, $file) = @_;
-	copy($file, $self->{DocumentRoot});
+	my ($self, $file, $contents) = @_;
+    if ( -f $file) {
+        copy($file, $self->{DocumentRoot});
+    } elsif(defined $contents) {
+        write_file($self->{DocumentRoot} . '/' . basename($file), $contents);
+    }
 }
 
+=head2 Stop the web server.
+
+Make sure to call this at the end of your script or apache will be a
+zombie. TODO: add this to the END{} block, probably.
+
+=cut
 sub stop {
 	my $self = shift;
 	kill "SIGQUIT", $self->{Pid};
 	unlink $self->{PidFile};	
 }
 
+=head2 Get the error log
+
+Read the error log as lines.
+
+=cut
 sub errors {
 	my $self = shift;
-	open my $log, '<', $self->{ErrorLog};
-	my @errors = <$log>;
-	close $log;
-	return @errors;
+    return read_file($self->{ErrorLog});
 }
 
 1;
