@@ -2,11 +2,12 @@
 package Server;
 use strict;
 use warnings;
+
 use File::Copy;
 use File::Basename;
 use File::Slurp;
-use Cwd;
 use File::Path qw/make_path/;
+use File::Temp qw/tempfile tempdir/;
 
 =head1 Apache as an object.
 
@@ -22,6 +23,7 @@ sub writeconf {
 	for (qw(ServerRoot PidFile DocumentRoot ErrorLog Listen)) {
 		print $out $_, $conf{$_};
 	}	
+    
 	close $out;
 	return $filename;
 }
@@ -43,9 +45,11 @@ assumed.
 TODO: Add the executable name to the argument. It is important.
 =cut
 
+our @servers;
+
 sub new {
     my $class = shift;
-    my $directory = shift || getcwd();
+    my $directory = shift || tempdir();
     bless {
         ServerRoot => $directory,
         PidFile => $directory . '/httpd.pid',
@@ -53,6 +57,18 @@ sub new {
         ErrorLog => $directory . '/error.log',
         Listen => 8000,
     }, $class;
+}
+
+=head2 Configure the web server
+    
+Restart the web server if needed
+
+=cut
+
+sub configure {
+    my ($self, %opts) = @_;
+    $self->{$_} = $opts{$_} for keys (%opts);
+    $self->restart() if($self->{Pid})
 }
 
 
@@ -68,7 +84,7 @@ sub start {
     my $self = shift;
 	make_path($self->{DocumentRoot}) unless -d $self->{DocumentRoot};
 	$self->{File} = writeconf(%$self);
-	$self->{Pid} = startprocess($self);	
+	push @servers, $self->{Pid} = startprocess($self);	
 }
 
 =head2 Serve a file (allowing it to be tested)
@@ -87,17 +103,30 @@ sub serve {
     }
 }
 
+
+
 =head2 Stop the web server.
 
 Make sure to call this at the end of your script or apache will be a
 zombie. TODO: add this to the END{} block, probably.
 
 =cut
+
 sub stop {
-	my ($self, $result) = (shift);
+	my $self = shift;
 	kill "SIGQUIT", $self->{Pid};
-    $result = wait;
     unlink $self->{PidFile} if -f $self->{PidFile};	
+    wait;
+}
+
+=head2 Restart the web server
+
+=cut
+
+sub restart {
+    my $self = shift;
+    $self->stop();
+    $self->start();
 }
 
 =head2 Get the error log
@@ -110,5 +139,11 @@ sub errors {
     return read_file($self->{ErrorLog});
 }
 
+
+END {
+    for (@servers) {
+        kill "SIGQUIT", $_;
+    }
+}
 
 1;

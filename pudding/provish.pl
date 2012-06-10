@@ -26,6 +26,7 @@ INDEX
 
 $server->start();
 $server->serve('index.html', $doc);
+
 my $client = Client->new($server);
 $client->is_ok('index.html') or carp('index does not exist');
 $client->is_get('index.html', $doc) or carp('doc looks different');
