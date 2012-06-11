@@ -61,6 +61,6 @@ chomp $make{$_} for (keys(%make));
 
 $make{FLAGS} =~ s/(-[lLI])(\S+)/$1 $2/g;
 $make{FLAGS} =~ s/\s+/ /g;
-write_definitions('module/config.mk', '%s=%s', \%make);
+write_definitions('config.mk', '%s=%s', \%make);
 
 write_definitions('pudding/config.pm', '$config::%s="%s";', \%make, 'package config;', '1;');
