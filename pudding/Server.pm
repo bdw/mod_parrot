@@ -12,7 +12,7 @@ use File::Temp qw/tempfile tempdir/;
 =head1 Apache as an object.
 
 This class implements a simple interface to apache, so it can be
-tested against by script.
+tested against by a script.
 
 =cut
 
@@ -23,7 +23,16 @@ sub writeconf {
 	for (qw(ServerRoot PidFile DocumentRoot ErrorLog Listen)) {
 		print $out $_, $conf{$_};
 	}	
-    
+    if(ref (my $modules = $conf{LoadModule}) eq 'HASH') {
+        print $out 'LoadModule', $_, $conf{LoadModule}->{$_} for keys(%$modules);
+    }
+
+    if(ref (my $options = $conf{Options}) eq 'HASH') {
+        print $out '<Location "/">';
+        print $out $_, $conf{Options}->{$_} for keys(%$options);
+        print $out '</Location>';
+    }
+
 	close $out;
 	return $filename;
 }
@@ -61,6 +70,17 @@ sub new {
     }, $class;
 }
 
+
+=head2 Load a module 
+
+=cut
+
+sub loadModule {
+    my ($self, %opts) = @_;
+    $self->{LoadModule} = \%opts;
+    $self->restart() if $self->{Pid};
+}
+
 =head2 Configure the web server
     
 Restart the web server if needed
@@ -69,8 +89,8 @@ Restart the web server if needed
 
 sub configure {
     my ($self, %opts) = @_;
-    $self->{$_} = $opts{$_} for keys (%opts);
-    $self->restart() if($self->{Pid})
+    $self->{Options}->{$_} = $opts{$_} for keys (%opts);
+    $self->restart() if $self->{Pid};
 }
 
 

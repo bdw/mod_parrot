@@ -25,7 +25,10 @@ my $doc = <<INDEX
 INDEX
     ;
 
+$server->loadModule( mod_parrot => $config::BUILDDIR . '/build/mod_parrot.so');
+
 $server->start();
+
 $server->serve('index.html', $doc);
 
 my $client = Client->new($server);
