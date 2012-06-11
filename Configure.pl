@@ -7,8 +7,8 @@ use Data::Dumper;
 =head1 Configure building mod_parrot
 
 This script makes:
-src/module/config.h
-src/module/config.mk
+module/config.h
+module/config.mk
 pudding/config.pm
 
 =cut
@@ -48,21 +48,19 @@ my %config = (
 );
 
 chomp $config{$_} for (keys %config);
-write_definitions('src/module/config.h', '#define %s "%s"', \%config);
+write_definitions('module/config.h', '#define %s "%s"', \%config);
 
 my %make = (
     LIBTOOL => qx/$apxs -q LIBTOOL/,
 	BUILDDIR => getcwd(),
     APXS => $apxs,
-    HTTPD => $httpd
+    HTTPD => $httpd,
+	FLAGS => qx/parrot_config embed-ldflags/ . ' ' . qx/parrot_config embed-cflags/,
 );
 chomp $make{$_} for (keys(%make));
 
-my %map = ( -l => 'LIB', -L => 'LDPATH', -I => 'INC');
-my $flags = qx/parrot_config embed-ldflags/ . ' ' . qx/parrot_config embed-cflags/;
-for (split /\s+/, $flags) {
-    $make{$map{substr $_, 0, 2}} .= substr($_, 0, 2) . ' ' . substr($_, 2) . ' ';
-}
-write_definitions('src/module/config.mk', '%s=%s', \%make);
+$make{FLAGS} =~ s/(-[lLI])(\S+)/$1 $2/g;
+$make{FLAGS} =~ s/\s+/ /g;
+write_definitions('module/config.mk', '%s=%s', \%make);
 
 write_definitions('pudding/config.pm', '$config::%s="%s";', \%make, 'package config;', '1;');

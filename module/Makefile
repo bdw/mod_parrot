@@ -7,7 +7,7 @@ mod_parrot.so:  $(MODULE)
 	$(LIBTOOL) --mode=install cp mod_parrot.la $(BUILDDIR)/build
 
 $(MODULE): $(SOURCE)
-		$(APXS) $(INC) $(LIB) $(LDPATH) -c $(SOURCE)
+		$(APXS) $(FLAGS) -c $(SOURCE)
 
 %.c: mod_parrot.h
 

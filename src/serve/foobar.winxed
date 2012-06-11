@@ -1,4 +1,0 @@
-function main[main]() {
-	say("Hello, World!");
-	say("I am a CGI script");
-}
