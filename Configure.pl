@@ -1,7 +1,17 @@
 #!/usr/bin/perl
 use strict;
 use warnings;
+use Carp;
+use Cwd;
 use Data::Dumper;
+=head1 Configure building mod_parrot
+
+This script makes:
+src/module/config.h
+src/module/config.mk
+pudding/config.pm
+
+=cut
 
 sub find_alternative {
     my ($names, $directories) = @_;
@@ -13,20 +23,22 @@ sub find_alternative {
     }
 }
 
-sub write_defines {
-	my ($filename, %values) = @_;
-	open my $out, '>', $filename;
-	local $\ = "\n";
-	printf $out "#define %s \"%s\"\n", $_, $values{$_} for (keys %values);
+sub write_definitions {
+	my ($filename, $format, $values, $prefix, $postfix) = @_;
+	open my $out, '>', $filename or croak 'Could not open '. $filename;
+    print $out "$prefix\n" if defined $prefix;
+	printf $out "$format\n", $_, $values->{$_} for (keys %$values);
+    print $out "$postfix\n" if defined $postfix;
 	close $out;
 }
 
+
+
 my @PATH = split(/:/, $ENV{PATH});
 my $apxs = find_alternative(['apxs','apxs2'], [@PATH, '/usr/sbin']);
-my $httpd = find_alternative(['httpd', 'apache2'], [@PATH,'/usr/sbin','/sbin']);
+my $httpd = find_alternative(['httpd', 'apache2'], [@PATH, '/usr/local/sbin','/usr/sbin','/sbin']);
 my $bash = find_alternative(['sh','bash'], \@PATH);
 my $parrot_config = find_alternative(['parrot_config'], \@PATH);
-
 
 # write the configuration header file
 my %config = (
@@ -34,78 +46,23 @@ my %config = (
 	VERSIONDIR => `parrot_config versiondir`,
 	BUILD_DIR => `parrot_config build_dir`,
 );
+
 chomp $config{$_} for (keys %config);
+write_definitions('src/module/config.h', '#define %s "%s"', \%config);
 
-write_defines('config.h', %config);
-
-# todo: clean this up into something that doesn't look like a total hack
-my %flags = ( 
-	'-l' => 'LIBS',
-	'-L' => 'LDPATH',
-	'-I' => 'INCLUDES'
-);
-
-my %info = (
-	LIBTOOL => `$apxs -q LIBTOOL`,
-	PWD => `pwd`,
+my %make = (
+    LIBTOOL => qx/$apxs -q LIBTOOL/,
+	BUILDDIR => getcwd(),
     APXS => $apxs,
     HTTPD => $httpd
 );
+chomp $make{$_} for (keys(%make));
 
-chomp $info{$_} for (keys %info);
-
-
-my $cflags = `parrot_config embed-cflags`;
-my $ldflags = `parrot_config embed-ldflags`;
-my @input = split (/\s+/, $cflags.' '.$ldflags);
-my %split = map {
-	my $flag = $_; 
-	$flag => [ map { substr $_, 2 } grep m/^$flag/, @input ] 
-} keys(%flags);
-# write the output file
-open my $in, '<', 'Makefile.in';
-open my $out, '>', 'Makefile'; 
-for my $flag (keys(%flags)) {
-	print $out $flags{$flag},'=',join(' ', map { $flag . ' ' . $_ } @{$split{$flag}}), "\n";
+my %map = ( -l => 'LIB', -L => 'LDPATH', -I => 'INC');
+my $flags = qx/parrot_config embed-ldflags/ . ' ' . qx/parrot_config embed-cflags/;
+for (split /\s+/, $flags) {
+    $make{$map{substr $_, 0, 2}} .= substr($_, 0, 2) . ' ' . substr($_, 2) . ' ';
 }
+write_definitions('src/module/config.mk', '%s=%s', \%make);
 
-for my $key (keys(%info)) {
-	print $out $key,'=',$info{$key}, "\n";
-}
-
-
-
-my $makefile = do { local $/ = <$in> };
-print $out $makefile;
-close $in;
-close $out;
-
-chomp $info{PWD};
-my $dir = $info{PWD} . '/build';
-mkdir $dir unless -d $dir;
-
-open $in, '<', 'httpd.conf.in';
-open $out, '>', $dir . '/httpd.conf' or die "Could not write httpd.conf";
-my $httpdconf = do { local $/ = <$in> };
-$httpdconf =~ s/\@BUILD\@/$dir/g;
-print $out $httpdconf;
-close $in;
-close $out;
-
-open $in, '<', 'start-server.sh.in';
-my $starserver = do {  local $/ = <$in> };
-
-open $out, '>', 'start-server.sh';
-
-print $out '#!'.$bash."\n";
-for my $key (keys(%info)) {
-	print $out $key,'="',$info{$key}, "\"\n";
-}
-print $out $starserver;
-close $in;
-close $out;
-chmod 0755, 'start-server.sh';
-
-print "Type make to build\n";
-
-
+write_definitions('pudding/config.pm', '$config::%s="%s";', \%make, 'package config;', '1;');

@@ -30,7 +30,7 @@ sub writeconf {
 
 sub startprocess {
     my $self = shift;
-    exec('httpd', '-d', $self->{ServerRoot}, '-f', $self->{File}, '-X') 
+    exec($self->{Process}, '-d', $self->{ServerRoot}, '-f', $self->{File}, '-X') 
         unless my $pid = fork();
     sleep(1); return $pid;
 }
@@ -48,9 +48,11 @@ TODO: Add the executable name to the argument. It is important.
 our @servers;
 
 sub new {
-    my $class = shift;
-    my $directory = shift || tempdir();
+    my ($class, $process, $directory) = @_;
+    $process ||= 'httpd';
+    $directory  ||= tempdir();
     bless {
+        Process => $process,
         ServerRoot => $directory,
         PidFile => $directory . '/httpd.pid',
         DocumentRoot => $directory . '/docs',

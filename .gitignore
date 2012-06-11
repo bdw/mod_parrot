@@ -2,13 +2,9 @@
 *.o
 .libs
 build
-Makefile
 *.lo
 *.la
 *.a
 *.slo
-httpd.pid
-error.log
 *.pbc
-start-server.sh
-config.h
+config.*

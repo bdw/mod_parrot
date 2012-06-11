@@ -4,13 +4,14 @@ use strict;
 
 use Server;
 use Client;
+use config;
 use Data::Dumper;
 use Carp;
 
 
 
 
-my $server = Server->new();
+my $server = Server->new($config::HTTPD);
 my $doc = <<INDEX
     <html>
     <head>

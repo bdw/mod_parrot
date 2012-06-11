@@ -7,6 +7,9 @@ use Server;
 
 =head1 Testing request againts output
 
+TODO: this should have a procedural (or functional, even) interface.
+
+
 =cut
 
 sub new {
