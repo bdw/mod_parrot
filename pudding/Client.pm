@@ -27,7 +27,7 @@ sub url {
 
 sub is_get {
 	my ($self, $uri, $exp) = @_;
-    $self->{http}->get(url(@_))->{content} eq $exp;
+    print $self->{http}->get(url(@_))->{content};
 }
 
 sub is_ok {

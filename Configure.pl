@@ -44,7 +44,8 @@ my $parrot_config = find_alternative(['parrot_config'], \@PATH);
 my %config = (
 	LIBDIR => `parrot_config libdir`,
 	VERSIONDIR => `parrot_config versiondir`,
-	BUILD_DIR => `parrot_config build_dir`,
+	BUILDDIR => `parrot_config build_dir`,
+	INSTALLDIR => `$apxs -q LIBEXECDIR`,
 );
 
 chomp $config{$_} for (keys %config);

@@ -8,6 +8,8 @@ use File::Basename;
 use File::Slurp;
 use File::Path qw/make_path/;
 use File::Temp qw/tempfile tempdir/;
+use Data::Dumper;
+use Carp;
 
 =head1 Apache as an object.
 
@@ -28,9 +30,7 @@ sub writeconf {
     }
 
     if(ref (my $options = $conf{Options}) eq 'HASH') {
-        print $out '<Location "/">';
         print $out $_, $conf{Options}->{$_} for keys(%$options);
-        print $out '</Location>';
     }
 
 	close $out;
@@ -66,7 +66,7 @@ sub new {
         PidFile => $directory . '/httpd.pid',
         DocumentRoot => $directory . '/docs',
         ErrorLog => $directory . '/error.log',
-        Listen => 8000,
+        Listen => 8000 + @servers,
     }, $class;
 }
 
@@ -125,7 +125,17 @@ sub serve {
     }
 }
 
+=head2 Debug a server using gdb
 
+=cut
+
+sub debug {
+    my $self = shift;
+	make_path($self->{DocumentRoot}) unless -d $self->{DocumentRoot};
+    $self->{File} = writeconf(%$self);
+    exec("gdb", "--args", $self->{Process}, "-d", $self->{ServerRoot},
+         "-f", $self->{File}, "-X");
+}
 
 =head2 Stop the web server.
 

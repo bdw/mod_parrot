@@ -26,13 +26,5 @@ INDEX
     ;
 
 $server->loadModule( mod_parrot => $config::BUILDDIR . '/build/mod_parrot.so');
-
-$server->start();
-
-$server->serve('index.html', $doc);
-
-my $client = Client->new($server);
-$client->is_ok('index.html') or carp('index does not exist');
-$client->is_get('index.html', $doc) or carp('doc looks different');
-$client->is_status('foobar.html', 404) or carp('there is a foobar.html');
-$server->stop();
+$server->configure( ParrotLoaderPath => $config::BUILDDIR . '/build/');
+$server->debug(); # this ends the script and starts gdb. You should have gdb.
