@@ -65,11 +65,9 @@ void mod_parrot_setup_args(Parrot_PMC i, request_rec *req, Parrot_PMC *args) {
 	hash_set(i, *args, "SERVER_NAME", req->server->server_hostname);
 	hash_set(i, *args, "SERVER_PROTOCOL", req->protocol);
 
-
 	/* Network parameters. This should be simpler, but it isn't. */
 	hash_set(i, *args, "SERVER_ADDR", ipaddr(req->connection->local_addr));
 	hash_set(i, *args, "SERVER_PORT", apr_itoa(req->pool, req->connection->local_addr->port));
-
 
 	hash_set(i, *args, "REMOTE_ADDR", ipaddr(req->connection->remote_addr));
 	hash_set(i, *args, "REMOTE_PORT", apr_itoa(req->pool, req->connection->remote_addr->port));
@@ -86,14 +84,13 @@ void mod_parrot_setup_args(Parrot_PMC i, request_rec *req, Parrot_PMC *args) {
 			continue;
 		hash_set(i, *args, header_convert(req->pool, entries[idx].key), entries[idx].val);
 	}
-
 }
 
 void mod_parrot_interpreter(Parrot_PMC *interp) {
 	Parrot_PMC configHash, pir, pasm;
 	Parrot_api_make_interpreter(NULL, 0, NULL, interp);
 	configHash = new_instance(*interp, "Hash", NULL);
-	hash_set(*interp, configHash, "build_dir", BUILD_DIR);
+	hash_set(*interp, configHash, "build_dir", BUILDDIR);
 	hash_set(*interp, configHash, "versiondir", VERSIONDIR);
 	hash_set(*interp, configHash, "libdir", LIBDIR);
 	Parrot_api_set_configuration_hash(*interp, configHash);
@@ -101,26 +98,36 @@ void mod_parrot_interpreter(Parrot_PMC *interp) {
 	imcc_get_pasm_compreg_api(*interp, 1, &pasm);
 }
 
+extern module mod_parrot;
 
 void mod_parrot_run(Parrot_PMC i, request_rec *req) {
 	Parrot_PMC bytecodePMC, argumentsPMC;
 	Parrot_PMC inputPMC, outputPMC;
 	Parrot_PMC stdinPMC, stdoutPMC;
-	Parrot_String fileName;
+	Parrot_String fileNameStr;
+    char * filename;
+    mod_parrot_conf * conf = NULL;
+    
+    /* setup input/output */
 	mod_parrot_io_new_input_handle(i, req, &inputPMC);
 	mod_parrot_io_new_output_handle(i, req, &outputPMC);
 	mod_parrot_io_read_input_handle(i, req, inputPMC);
 
-	mod_parrot_setup_args(i, req, &argumentsPMC);
-
 	Parrot_api_set_stdhandle(i, inputPMC, 0, &stdinPMC);
 	Parrot_api_set_stdhandle(i, outputPMC, 1, &stdoutPMC);
-	
-	Parrot_api_string_import_ascii(i, "mod_parrot.pbc", &fileName);
-	Parrot_api_load_bytecode_file(i, fileName, &bytecodePMC);
 
+    conf = ap_get_module_config(req->server->module_config, &mod_parrot);
+    if(conf) {
+        filename = apr_pstrcat(req->pool, conf->loaderPath, "/", "mod_parrot.pbc", NULL);
+    } else {
+        filename = apr_pstrcat(req->pool, INSTALLDIR, "/", "mod_parrot.pbc", NULL);
+    }
+    ap_rputs(filename, req);
+    /* initialize the loader script */
+    Parrot_api_string_import_ascii(i, filename, &fileNameStr);
+    Parrot_api_load_bytecode_file(i, fileNameStr, &bytecodePMC);
+    /* setup arguments to the loader */
+    mod_parrot_setup_args(i, req, &argumentsPMC);
     Parrot_api_run_bytecode(i, bytecodePMC, argumentsPMC);
-	mod_parrot_io_write_output_handle(i, req, outputPMC);
-
-
+    mod_parrot_io_write_output_handle(i, req, outputPMC);
 }

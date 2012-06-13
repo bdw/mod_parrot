@@ -80,3 +80,13 @@ to the apache error log. The level of detail desired may be configured at
 the module level. Within the parrot interpreter, standard error will do
 nicely for this purpose.
 
+Structure
+=========
+
+All source code goes to src/
+The 'module' (C code) goes to src/module
+The loaders (winxed) go to src/loader
+The library for loaders go to src/library
+
+Test to go t/
+
