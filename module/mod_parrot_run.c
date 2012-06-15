@@ -110,12 +110,12 @@ int mod_parrot_run(Parrot_PMC interp, request_rec *req) {
 	Parrot_String fileNameStr;
     char * filename;
     mod_parrot_conf * conf = NULL;
-    
-    /* setup input/output */
-	mod_parrot_io_new_input_handle(interp, req, &inputPMC);
-	mod_parrot_io_read_input_handle(interp, req, inputPMC);
-
-	Parrot_api_set_stdhandle(interp, inputPMC, 0, &stdinPMC);
+    /** 
+     * This is here, because, as it turns out, they can only be called once.
+     * And i have no idea how many times mod_parrot_read will be called. 
+     **/
+    ap_setup_client_block(req, REQUEST_CHUNKED_DECHUNK);
+    ap_should_client_block(req);
     
     conf = ap_get_module_config(req->server->module_config, &mod_parrot);
     if(conf) {

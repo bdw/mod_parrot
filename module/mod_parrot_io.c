@@ -69,6 +69,15 @@ void mod_parrot_io_read_input_handle(Parrot_PMC interp, request_rec *r, Parrot_P
 
 }
 
+int mod_parrot_write(void * b, size_t s, request_rec * r) {
+    return ap_rwrite(b, s, r);
+}
+
+int mod_parrot_read(void * b, size_t s, request_rec * r) {
+    size_t count = r->remaining;
+    ap_get_client_block(r, b, s);
+    return count - r->remaining;
+}
 
 int mod_parrot_report_error(Parrot_PMC interp, request_rec *req) {
   Parrot_Int is_error, exit_code;
@@ -81,8 +90,10 @@ int mod_parrot_report_error(Parrot_PMC interp, request_rec *req) {
       Parrot_api_string_export_ascii(interp, error_message, &rrmsg);
       Parrot_api_string_export_ascii(interp, backtrace, &bcktrc);
       ap_rputs(rrmsg, req);
+      fputs(rrmsg, stderr);
       ap_rputs("\n", req);
       ap_rputs(bcktrc, req);
+      fputs(bcktrc, stderr);
   } 
   return HTTP_INTERNAL_SERVER_ERROR;
 

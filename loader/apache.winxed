@@ -6,7 +6,7 @@ namespace apache {
 
         function output(var request) {
             self.request = request;
-            self.func = dlfunc(null, "ap_rwrite", 'ipip');
+            self.func = dlfunc(null, "mod_parrot_write", "ipip");
             self.buffer = new 'ByteBuffer';
         }
 
@@ -16,4 +16,22 @@ namespace apache {
             return write(self.buffer, elements(self.buffer), self.request);
         }
     }   
+    
+    class input {
+        var func;
+        var request;
+        var buffer;
+        function input(var request) {
+            self.request = request;
+            self.func = dlfunc(null, "mod_parrot_read", "ipip");
+            self.buffer = new 'ByteBuffer';
+        }
+
+        function read(int size) {
+            self.buffer =: size;
+            var gets = self.func;
+            gets(self.buffer, size, self.request);
+            return string(self.buffer);
+        }
+    }
 }

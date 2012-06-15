@@ -13,10 +13,10 @@ static int mod_parrot_handler(request_rec *req) {
         compiler = apr_table_get(conf->languages, baseName + idx);
     } 
     if(compiler) {
-      mod_parrot_interpreter(&interp);
-      code = mod_parrot_run(interp, req); // result code
-      Parrot_api_destroy_interpreter(interp); 
-      return code;
+        mod_parrot_interpreter(&interp);
+        code = mod_parrot_run(interp, req); // result code
+        Parrot_api_destroy_interpreter(interp); 
+        return code;
     } 
     return DECLINED;
 }
@@ -37,28 +37,26 @@ static const char * mod_parrot_set_loader_path(cmd_parms *cmd, void * dummy, con
     conf = ap_get_module_config(cmd->server->module_config, &mod_parrot);
     if(conf) {
         conf->loaderPath = arg;
-        
     } /* we should check if the loaderpath is really a directory here */
     return NULL;
 }
 
 static const char * mod_parrot_set_loader(cmd_parms *cmd, void * dummy, const char * arg) {
-  mod_parrot_conf * conf;
-  conf = ap_get_module_config(cmd->server->module_config, &mod_parrot);
-  if(conf) {
-    conf->loader = arg;
-  }
-  return NULL;
+    mod_parrot_conf * conf;
+    conf = ap_get_module_config(cmd->server->module_config, &mod_parrot);
+    if(conf) {
+        conf->loader = arg;
+    }
+    return NULL;
 }
 
 static const char * mod_parrot_add_language(cmd_parms *cmd, void * dummy, const char * compiler, const char * suffix) {
-  mod_parrot_conf * conf;
-  conf = ap_get_module_config(cmd->server->module_config, &mod_parrot);
-  if(conf) {
-    printf("%s %s\n", suffix, compiler);
-    apr_table_set(conf->languages, suffix, compiler);
-  }
-  return NULL;
+    mod_parrot_conf * conf;
+    conf = ap_get_module_config(cmd->server->module_config, &mod_parrot);
+    if(conf) {
+        apr_table_set(conf->languages, suffix, compiler);
+    }
+    return NULL;
 }
 
 static void mod_parrot_register_hooks(apr_pool_t *p) {
@@ -68,7 +66,7 @@ static void mod_parrot_register_hooks(apr_pool_t *p) {
 static command_rec mod_parrot_directives[] = {
     AP_INIT_TAKE1("ParrotLoaderPath", mod_parrot_set_loader_path, NULL, RSRC_CONF, "Set the path for loader bytecodes"),
     AP_INIT_TAKE1("ParrotLoader", mod_parrot_set_loader, NULL, RSRC_CONF, "Set the loader bytecode for parrot (including extension)"),
-    AP_INIT_TAKE2("ParrotLanguage", mod_parrot_add_language, NULL, RSRC_CONF, "Register a language for parrot to use"),
+    AP_INIT_ITERATE2("ParrotLanguage", mod_parrot_add_language, NULL, RSRC_CONF, "Register a language for parrot to use"),
     { NULL },
 };
 
