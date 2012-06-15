@@ -7,10 +7,10 @@ static int mod_parrot_handler(request_rec *req) {
     mod_parrot_conf * conf = ap_get_module_config(req->server->module_config, &mod_parrot);
     char * fullName = apr_pstrdup(req->pool, req->filename);
     char * baseName = basename(fullName);
-    char * compiler = NULL;
+    const char * compiler = NULL;
     int idx = ap_rind(baseName, '.');
     if(idx > 0) {
-      compiler = apr_table_get(conf->languages, baseName + idx);
+        compiler = apr_table_get(conf->languages, baseName + idx);
     } 
     if(compiler) {
       mod_parrot_interpreter(&interp);
@@ -37,6 +37,7 @@ static const char * mod_parrot_set_loader_path(cmd_parms *cmd, void * dummy, con
     conf = ap_get_module_config(cmd->server->module_config, &mod_parrot);
     if(conf) {
         conf->loaderPath = arg;
+        
     } /* we should check if the loaderpath is really a directory here */
     return NULL;
 }

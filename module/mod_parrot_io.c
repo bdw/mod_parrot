@@ -70,9 +70,9 @@ void mod_parrot_io_new_output_handle(Parrot_PMC interp, request_rec *r, Parrot_P
 void mod_parrot_io_read_input_handle(Parrot_PMC interp, request_rec *r, Parrot_PMC handle) {
 	char buffer[1024];
 	size_t count;
-	if(ap_setup_client_block(r, REQUEST_CHUNKED_ERROR)) 
+	if (ap_setup_client_block(r, REQUEST_CHUNKED_ERROR)) 
 		return;
-	if(ap_should_client_block(r)) {
+	if (ap_should_client_block(r)) {
 		count = r->remaining;
 		/* current (post-2.4) apache doumentation will tell you that
 		 * ap_get_client_block returns the number of bytes read (if
@@ -80,7 +80,7 @@ void mod_parrot_io_read_input_handle(Parrot_PMC interp, request_rec *r, Parrot_P
 		 * use for development, it simply returns 1 in case of success.
 		 * Hence, the amount of bytes read should be deducted from the
 		 * difference in remaining bytes between successive calls */
-		while(ap_get_client_block(r, buffer, sizeof(buffer)) > 0) {
+		while (ap_get_client_block(r, buffer, sizeof(buffer)) > 0) {
 			write_stringhandle(interp, handle, buffer, count - r->remaining);
 			count = r->remaining;
 		}
@@ -104,7 +104,21 @@ void mod_parrot_io_write_output_handle(Parrot_PMC interp, request_rec *req, Parr
 	Parrot_api_string_free_exported_ascii(interp, buffer);
 }
 
-void mod_parrot_io_report_error(Parrot_PMC interp, request_rec *req) {
-    req->content_type = "text/plain";
-    ap_rputs(  "there was an error clearly", req);
+void mod_parrot_report_error(Parrot_PMC interp, request_rec *req) {
+  Parrot_Int is_error, exit_code;
+  Parrot_PMC exception;
+  Parrot_String error_message, backtrace;
+  req->status = 500;
+  if (Parrot_api_get_result(interp, &is_error, &exception, &exit_code, &error_message) && is_error) {
+      /* do something useful on the basis of this information */
+      char *rrmsg,  *bcktrc;
+      Parrot_api_get_exception_backtrace(interp, exception, &backtrace);
+      Parrot_api_string_export_ascii(interp, error_message, &rrmsg);
+      Parrot_api_string_export_ascii(interp, backtrace, &bcktrc);
+      ap_rputs(rrmsg, req);
+      ap_rputs("\n", req);
+      ap_rputs(bcktrc, req);
+  } 
+      
+
 }

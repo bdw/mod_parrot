@@ -1,11 +1,12 @@
 include ../config.mk
+FILES=mod_parrot.pbc apache.pbc
+OUTPUT=../build/mod_parrot.pbc ../build/apache.pbc
 
-all: mod_parrot.pbc
-	cp $< $(BUILDDIR)/build
+$(OUTPUT): $(FILES)
+	cp $(FILES) $(BUILDDIR)/build
 
 %.pbc: %.pir
 	parrot -o $@ $< 
-	cp $@ build
 
 %.pir: %.winxed
 	winxed -c $<

@@ -1,0 +1,19 @@
+namespace apache {
+    class output {
+        var func;
+        var request;
+        var buffer;
+
+        function output(var request) {
+            self.request = request;
+            self.func = dlfunc('ap_rwrite', null, 'ipip');
+            self.buffer = new 'ByteBuffer';
+        }
+
+        function puts(string msg) {
+            var write = self.func;
+            self.buffer =: msg;
+            return write(self.buffer, elements(self.buffer), self.request);
+        }
+    }   
+}
