@@ -102,22 +102,20 @@ void mod_parrot_interpreter(Parrot_PMC *interp) {
 
 extern module mod_parrot;
 
-void mod_parrot_run(Parrot_PMC interp, request_rec *req) {
+int mod_parrot_run(Parrot_PMC interp, request_rec *req) {
 	Parrot_PMC bytecodePMC;
     Parrot_PMC requestPMC;
-	Parrot_PMC inputPMC, outputPMC;
-	Parrot_PMC stdinPMC, stdoutPMC;
+	Parrot_PMC inputPMC;
+	Parrot_PMC stdinPMC;
 	Parrot_String fileNameStr;
     char * filename;
     mod_parrot_conf * conf = NULL;
     
     /* setup input/output */
 	mod_parrot_io_new_input_handle(interp, req, &inputPMC);
-	mod_parrot_io_new_output_handle(interp, req, &outputPMC);
 	mod_parrot_io_read_input_handle(interp, req, inputPMC);
 
 	Parrot_api_set_stdhandle(interp, inputPMC, 0, &stdinPMC);
-	Parrot_api_set_stdhandle(interp, outputPMC, 1, &stdoutPMC);
     
     conf = ap_get_module_config(req->server->module_config, &mod_parrot);
     if(conf) {
@@ -136,8 +134,8 @@ void mod_parrot_run(Parrot_PMC interp, request_rec *req) {
     Parrot_api_wrap_pointer(interp, req, sizeof(request_rec), &requestPMC);
     
     if(Parrot_api_run_bytecode(interp, bytecodePMC, requestPMC)) {
-        mod_parrot_io_write_output_handle(interp, req, outputPMC);
+        return OK;
     } else {
-        mod_parrot_report_error(interp, req);
+        return mod_parrot_report_error(interp, req);
     }
 }

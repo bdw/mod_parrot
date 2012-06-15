@@ -8,15 +8,15 @@ static int mod_parrot_handler(request_rec *req) {
     char * fullName = apr_pstrdup(req->pool, req->filename);
     char * baseName = basename(fullName);
     const char * compiler = NULL;
-    int idx = ap_rind(baseName, '.');
+    int code, idx = ap_rind(baseName, '.');
     if(idx > 0) {
         compiler = apr_table_get(conf->languages, baseName + idx);
     } 
     if(compiler) {
       mod_parrot_interpreter(&interp);
-      mod_parrot_run(interp, req);
+      code = mod_parrot_run(interp, req); // result code
       Parrot_api_destroy_interpreter(interp); 
-      return OK;
+      return code;
     } 
     return DECLINED;
 }

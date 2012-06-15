@@ -6,7 +6,7 @@ namespace apache {
 
         function output(var request) {
             self.request = request;
-            self.func = dlfunc('ap_rwrite', null, 'ipip');
+            self.func = dlfunc(null, "ap_rwrite", 'ipip');
             self.buffer = new 'ByteBuffer';
         }
 

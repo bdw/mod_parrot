@@ -2,7 +2,6 @@
 
 static Parrot_PMC new_stringhandle(Parrot_PMC interp);
 static void open_stringhandle(Parrot_PMC interp, Parrot_PMC handlePMC, char * mode);
-static Parrot_String read_stringhandle(Parrot_PMC interp, Parrot_PMC handle);
 static void write_stringhandle(Parrot_PMC interp, Parrot_PMC handle, void * buf, size_t size);
 
 static Parrot_PMC new_stringhandle(Parrot_PMC interp) {
@@ -33,20 +32,6 @@ static void open_stringhandle(Parrot_PMC interp, Parrot_PMC handlePMC, char * mo
 	Parrot_api_pmc_invoke(interp, methodPMC, callPMC);
 }
 
-static Parrot_String read_stringhandle(Parrot_PMC interp, Parrot_PMC handlePMC) {
-	Parrot_String methodName;
-	Parrot_PMC methodPMC, callPMC, resultPMC;
-	Parrot_String result;
-	Parrot_api_string_import_ascii(interp, "readall", &methodName);
-	Parrot_api_pmc_find_method(interp, handlePMC, methodName, &methodPMC);
-	Parrot_api_pmc_new_call_object(interp, &callPMC);
-	Parrot_api_pmc_setup_signature(interp, callPMC, "Pi->S", handlePMC);
-	Parrot_api_pmc_invoke(interp, methodPMC, callPMC);
-	Parrot_api_pmc_get_keyed_int(interp, callPMC, 0, &resultPMC);
-	Parrot_api_pmc_get_string(interp, resultPMC, &result);
-	return result;
-}
-
 static void write_stringhandle(Parrot_PMC interp, Parrot_PMC handlePMC, void * buffer, size_t size) {
 	Parrot_PMC methodPMC, callPMC;
 	Parrot_String methodName;
@@ -60,10 +45,6 @@ static void write_stringhandle(Parrot_PMC interp, Parrot_PMC handlePMC, void * b
 }
 
 void mod_parrot_io_new_input_handle(Parrot_PMC interp, request_rec *r, Parrot_PMC *handle) {
-	*handle = new_stringhandle(interp);
-}
-
-void mod_parrot_io_new_output_handle(Parrot_PMC interp, request_rec *r, Parrot_PMC *handle) {
 	*handle = new_stringhandle(interp);
 }
 
@@ -89,26 +70,10 @@ void mod_parrot_io_read_input_handle(Parrot_PMC interp, request_rec *r, Parrot_P
 }
 
 
-/**
- * This will obviously be an awesome routine one day.
- * Right now it assumes stringhandles.
- **/
-void mod_parrot_io_write_output_handle(Parrot_PMC interp, request_rec *req, Parrot_PMC handle) {
-	Parrot_String output;
-	Parrot_Int length;
-	char * buffer;
-	output = read_stringhandle(interp, handle);
-	Parrot_api_string_export_ascii(interp, output, &buffer);
-	Parrot_api_string_byte_length(interp, output, &length);
-	ap_rwrite(buffer, length, req);
-	Parrot_api_string_free_exported_ascii(interp, buffer);
-}
-
-void mod_parrot_report_error(Parrot_PMC interp, request_rec *req) {
+int mod_parrot_report_error(Parrot_PMC interp, request_rec *req) {
   Parrot_Int is_error, exit_code;
   Parrot_PMC exception;
   Parrot_String error_message, backtrace;
-  req->status = 500;
   if (Parrot_api_get_result(interp, &is_error, &exception, &exit_code, &error_message) && is_error) {
       /* do something useful on the basis of this information */
       char *rrmsg,  *bcktrc;
@@ -119,6 +84,6 @@ void mod_parrot_report_error(Parrot_PMC interp, request_rec *req) {
       ap_rputs("\n", req);
       ap_rputs(bcktrc, req);
   } 
-      
+  return HTTP_INTERNAL_SERVER_ERROR;
 
 }

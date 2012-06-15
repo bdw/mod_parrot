@@ -1,26 +1,12 @@
 
 
 function main[main](var request) { 
-    say("Begin of script");
-    try {
-		load_bytecode('apache.pbc');
-		var output = new apache.output(request);
-        var interp = getinterp();
-        interp.stdout_handle(output);
-        say("Hello, world!");
-    }  catch(e) { 
-               say(e.message); 
-               var bt = e.backtrace();
-               for(int i = 0; i < elements(bt); i++) {
-                       var sub = bt[i]['sub'];
-                       var annotations = bt[i]['annotations'];
-                       if(sub != null)
-                            say(string(sub));
-                       for(var n in annotations)
-                               say(sprintf("%s: %s", [n, annotations[n]]));
-               }       
-     } 
-    say("End of script");
+    load_bytecode('apache.pbc');
+    var output = new apache.output(request);
+    getinterp().stdout_handle(output);
+
+    say("Hello, world!");
+
 }
 
 function getBytecode(string fileName) {
