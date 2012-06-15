@@ -26,5 +26,8 @@ INDEX
     ;
 
 $server->loadModule( mod_parrot => $config::BUILDDIR . '/build/mod_parrot.so');
-$server->configure( ParrotLoaderPath => $config::BUILDDIR . '/build/');
+$server->configure( 
+    ParrotLoaderPath => $config::BUILDDIR . '/build', 
+    ParrotLanguage => "winxed .winxed",
+);
 $server->debug(); # this ends the script and starts gdb. You should have gdb.

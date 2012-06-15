@@ -1,17 +1,12 @@
 function main[main](var args) {
     try {
-		if(compreg("PIR") == null) {
-			say("Dead as a PIR");
-			debugRequest(args);
-		} else {
-			say("PIR Lives");
-		}
 		load_language('winxed');
-		loadlib('os');
-		var os = new 'OS'();
+        loadlib('file');
+        loadlib('os');
+        var file = new 'File'();
+        var os = new 'OS'();
 		string fileName = args['SCRIPT_NAME']; 
-		fileName = 'foobar.winxed';
-		if(os.exists(fileName) && os.can_read(fileName)) {
+		if(os.exists(fileName) && file.is_file(fileName) && os.can_read(fileName)) {
 			cgiRun(fileName, args);
 		} else {
 			say(sprintf("Could not resolve %s", [fileName]));

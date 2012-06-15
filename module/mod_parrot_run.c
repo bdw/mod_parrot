@@ -3,8 +3,7 @@
 #include <strings.h>
 #include <ctype.h>
 
-
-/* Some of the methods below should be in mod_parrot_util.c. */
+/* Some of the functions below should be in mod_parrot_util.c. */
 
 static Parrot_PMC new_instance(Parrot_PMC i, char * class, Parrot_PMC initPMC) {
 	Parrot_PMC classPMC, keyPMC;
@@ -51,6 +50,7 @@ static char * ipaddr(apr_sockaddr_t *a) {
 
 void mod_parrot_setup_args(Parrot_PMC i, request_rec *req, Parrot_PMC *args) {
 	const apr_array_header_t *array;
+    mod_parrot_conf * conf;
 	apr_table_entry_t * entries;
 	int idx;
 
@@ -76,7 +76,7 @@ void mod_parrot_setup_args(Parrot_PMC i, request_rec *req, Parrot_PMC *args) {
 		hash_set(i, *args, "SERVER_ADMIN", req->server->server_admin);
 
 	/* Read headers. It may be worthwhile to extract this into its' own
-	 * routine, but I do not know how general it really is */
+	 * routine. Update: because then it can be called with NCI */
 	array = apr_table_elts(req->headers_in);
 	entries = (apr_table_entry_t *) array->elts;
 	for(idx = 0; idx < array->nelts; idx++) {
@@ -84,6 +84,8 @@ void mod_parrot_setup_args(Parrot_PMC i, request_rec *req, Parrot_PMC *args) {
 			continue;
 		hash_set(i, *args, header_convert(req->pool, entries[idx].key), entries[idx].val);
 	}
+    
+    
 }
 
 void mod_parrot_interpreter(Parrot_PMC *interp) {
@@ -118,11 +120,10 @@ void mod_parrot_run(Parrot_PMC i, request_rec *req) {
 
     conf = ap_get_module_config(req->server->module_config, &mod_parrot);
     if(conf) {
-        filename = apr_pstrcat(req->pool, conf->loaderPath, "/", "mod_parrot.pbc", NULL);
+        filename = apr_pstrcat(req->pool, conf->loaderPath, "/", conf->loader, NULL);
     } else {
         filename = apr_pstrcat(req->pool, INSTALLDIR, "/", "mod_parrot.pbc", NULL);
     }
-    ap_rputs(filename, req);
     /* initialize the loader script */
     Parrot_api_string_import_ascii(i, filename, &fileNameStr);
     Parrot_api_load_bytecode_file(i, fileNameStr, &bytecodePMC);
