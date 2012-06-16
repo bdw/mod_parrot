@@ -11,19 +11,19 @@
 #include "config.h"
 
 
+typedef struct {
+  const char * loaderPath;
+  const char * loader;
+  apr_table_t * languages;
+} mod_parrot_conf;
+
 void mod_parrot_io_new_input_handle(Parrot_PMC interp, request_rec *req, Parrot_PMC *handle);
 void mod_parrot_io_read_input_handle(Parrot_PMC interp, request_rec *req, Parrot_PMC handle);
 int mod_parrot_report_error(Parrot_PMC interp, request_rec *req);
 int mod_parrot_write(void * buf, size_t size, request_rec *req);
 int mod_parrot_read(void * buf, size_t size, request_rec * req);
 
-void mod_parrot_interpreter(Parrot_PMC *interp);
+Parrot_PMC mod_parrot_interpreter(mod_parrot_conf * conf);
 int mod_parrot_run(Parrot_PMC interp, request_rec *req);
 void mod_parrot_setup_args(Parrot_PMC interp, request_rec *req, Parrot_PMC *args);
 
-
-typedef struct {
-  const char * loaderPath;
-  const char * loader;
-  apr_table_t * languages;
-} mod_parrot_conf;

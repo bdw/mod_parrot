@@ -2,13 +2,11 @@
 
 function main[main](var request) { 
     load_bytecode('apache.pbc');
-    var output = new apache.output(request);
-    var input = new apache.input(request);
-    getinterp().stdout_handle(output);
-    getinterp().stdin_handle(input);
+    apache.setup(request);
     say("Hello, world!");
-    var str = getstdin().readall();
-	say(length(str));
+    print("1 + 1 = ", 1 + 1);
+    print("\n");
+
 }
 
 function getBytecode(string fileName) {

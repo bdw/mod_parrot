@@ -84,20 +84,20 @@ void mod_parrot_setup_args(Parrot_PMC i, request_rec *req, Parrot_PMC *args) {
 		hash_set(i, *args, header_convert(req->pool, entries[idx].key), entries[idx].val);
 	}
     
-    
 }
 
-void mod_parrot_interpreter(Parrot_PMC *interp) {
-	Parrot_PMC configHash, pir, pasm;
-	Parrot_api_make_interpreter(NULL, 0, NULL, interp);
-	configHash = new_instance(*interp, "Hash", NULL);
-	hash_set(*interp, configHash, "build_dir", BUILDDIR);
-	hash_set(*interp, configHash, "versiondir", VERSIONDIR);
-	hash_set(*interp, configHash, "libdir", LIBDIR);
-	Parrot_api_set_configuration_hash(*interp, configHash);
-    Parrot_api_add_library_search_path(*interp, INSTALLDIR);
-	imcc_get_pir_compreg_api(*interp, 1, &pir);
-	imcc_get_pasm_compreg_api(*interp, 1, &pasm);
+Parrot_PMC mod_parrot_interpreter(mod_parrot_conf * conf) {
+	Parrot_PMC interp, configHash;
+    Parrot_PMC pir, pasm;
+    Parrot_api_make_interpreter(NULL, 0, NULL, &interp);
+	configHash = new_instance(interp, "Hash", NULL);
+	hash_set(interp, configHash, "build_dir", BUILDDIR);
+	hash_set(interp, configHash, "versiondir", VERSIONDIR);
+	hash_set(interp, configHash, "libdir", LIBDIR);
+	Parrot_api_set_configuration_hash(interp, configHash);
+	imcc_get_pir_compreg_api(interp, 1, &pir);
+	imcc_get_pasm_compreg_api(interp, 1, &pasm);
+    return interp;
 }
 
 extern module mod_parrot;
@@ -105,17 +105,9 @@ extern module mod_parrot;
 int mod_parrot_run(Parrot_PMC interp, request_rec *req) {
 	Parrot_PMC bytecodePMC;
     Parrot_PMC requestPMC;
-	Parrot_PMC inputPMC;
-	Parrot_PMC stdinPMC;
 	Parrot_String fileNameStr;
     char * filename;
     mod_parrot_conf * conf = NULL;
-    /** 
-     * This is here, because, as it turns out, they can only be called once.
-     * And i have no idea how many times mod_parrot_read will be called. 
-     **/
-    ap_setup_client_block(req, REQUEST_CHUNKED_DECHUNK);
-    ap_should_client_block(req);
     
     conf = ap_get_module_config(req->server->module_config, &mod_parrot);
     if(conf) {

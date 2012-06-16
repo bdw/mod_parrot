@@ -3,7 +3,6 @@
 module mod_parrot;
 
 static int mod_parrot_handler(request_rec *req) {
-	Parrot_PMC interp;
     mod_parrot_conf * conf = ap_get_module_config(req->server->module_config, &mod_parrot);
     char * fullName = apr_pstrdup(req->pool, req->filename);
     char * baseName = basename(fullName);
@@ -13,7 +12,7 @@ static int mod_parrot_handler(request_rec *req) {
         compiler = apr_table_get(conf->languages, baseName + idx);
     } 
     if(compiler) {
-        mod_parrot_interpreter(&interp);
+        Parrot_PMC interp = mod_parrot_interpreter(conf);
         code = mod_parrot_run(interp, req); // result code
         Parrot_api_destroy_interpreter(interp); 
         return code;

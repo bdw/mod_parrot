@@ -7,7 +7,7 @@ namespace apache {
         function output(var request) {
             self.request = request;
             self.func = dlfunc(null, "mod_parrot_write", "ipip");
-            self.buffer = new 'ByteBuffer';
+            self.buffer = new ByteBuffer; // warn then, I dare you
         }
 
         function puts(string msg) {
@@ -20,18 +20,38 @@ namespace apache {
     class input {
         var func;
         var request;
+        var remaining;
         var buffer;
+
         function input(var request) {
             self.request = request;
             self.func = dlfunc(null, "mod_parrot_read", "ipip");
-            self.buffer = new 'ByteBuffer';
+            var setupFunc = dlfunc(null, "mod_parrot_setup_input", "ip");
+            self.remaining = setupFunc(request);
+            self.buffer = new ByteBuffer;
+            say(sprintf("I have %d remaining", [ self.remaining ] ));
+        }
+        
+        function readline() {
+            // use some buffering mechanism
+        }
+
+        function readall() {
+            // here, too
         }
 
         function read(int size) {
             self.buffer =: size;
-            var gets = self.func;
-            gets(self.buffer, size, self.request);
-            return string(self.buffer);
+            var reader = self.func;
+            int readBytes = reader(self.buffer, size, self.request);
+            self.buffer =: readBytes;
+            return self.buffer.get_string("binary"); 
+        
         }
+    }
+
+    function setup[main](var request) {
+        getinterp().stdin_handle(new input(request));
+        getinterp().stdout_handle(new output(request));            
     }
 }
