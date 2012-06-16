@@ -102,29 +102,30 @@ Parrot_PMC mod_parrot_interpreter(mod_parrot_conf * conf) {
 
 extern module mod_parrot;
 
+static Parrot_PMC load_bytecode(Parrot_PMC interp, request_rec *req, char * filename)
+{
+    Parrot_PMC bytecodePMC;
+    Parrot_String fileNameStr;
+    mod_parrot_conf * conf = ap_get_module_config(req->server->module_config, &mod_parrot);
+    char * fullName = (conf ? 
+                       apr_pstrcat(req->pool, conf->loaderPath, "/", filename, NULL) :
+                       apr_pstrcat(req->pool, INSTALLDIR, "/", filename, NULL));
+    puts(fullName);
+    Parrot_api_string_import_ascii(interp, fullName, &fileNameStr);
+    Parrot_api_load_bytecode_file(interp, fileNameStr, &bytecodePMC);
+    return bytecodePMC;
+}
+
 int mod_parrot_run(Parrot_PMC interp, request_rec *req) {
+    Parrot_PMC libraryPMC;
 	Parrot_PMC bytecodePMC;
     Parrot_PMC requestPMC;
-	Parrot_String fileNameStr;
-    char * filename;
-    mod_parrot_conf * conf = NULL;
-    
-    conf = ap_get_module_config(req->server->module_config, &mod_parrot);
-    if(conf) {
-        filename = apr_pstrcat(req->pool, conf->loaderPath, 
-                               "/", conf->loader, NULL);
-        /* should not be here. no, no no */
-        Parrot_api_add_library_search_path(interp, conf->loaderPath);
-    } else {
-        filename = apr_pstrcat(req->pool, INSTALLDIR, 
-                               "/", "mod_parrot.pbc", NULL);
-    }
-
-    /* initialize the loader script */
-    Parrot_api_string_import_ascii(interp, filename, &fileNameStr);
-    Parrot_api_load_bytecode_file(interp, fileNameStr, &bytecodePMC);
+    libraryPMC = load_bytecode(interp, req, "apache.pbc");
+    bytecodePMC = load_bytecode(interp, req, "mod_parrot.pbc");
     Parrot_api_wrap_pointer(interp, req, sizeof(request_rec), &requestPMC);
-    
+    if(!Parrot_api_run_bytecode(interp, libraryPMC, requestPMC)) {
+        return mod_parrot_report_error(interp, req);
+    } 
     if(Parrot_api_run_bytecode(interp, bytecodePMC, requestPMC)) {
         return OK;
     } else {

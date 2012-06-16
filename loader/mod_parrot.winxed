@@ -1,39 +1,9 @@
 
 
 function main[main](var request) { 
-    load_bytecode('apache.pbc');
-    apache.setup(request);
     say("Hello, world!");
     print("1 + 1 = ", 1 + 1);
     print("\n");
-
+    say(getstdin().readall());
 }
 
-function getBytecode(string fileName) {
-	var handle = new 'FileHandle'();
-	handle.open(fileName, "r");
-	string source = handle.readall();
-	var compiler = compreg('winxed');	
-	var result = compiler.compile(source);
-	return result;
-}
-
-function cgiRun(string fileName, var args) {
-	var bytecode = getBytecode(fileName);
-	var mainSub = bytecode.main_sub();
-	mainSub([ fileName ]);
-}
-
-function debugRequest(args) {
-	var input = getstdin();
-	if(!input.isatty()) {
-		string msg = input.readall();
-		say(sprintf("POST data was %d bytes long", [ length(msg) ]));
-	}
-    /*
-	for(var k in args) {
-		string msg = sprintf("%s: %s", [k, args[k]]);
-		say(msg);
-	}
-    */
-}

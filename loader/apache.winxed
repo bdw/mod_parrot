@@ -22,31 +22,42 @@ namespace apache {
         var request;
         var remaining;
         var buffer;
-
+        var readSize;
+        
         function input(var request) {
             self.request = request;
             self.func = dlfunc(null, "mod_parrot_read", "ipip");
             var setupFunc = dlfunc(null, "mod_parrot_setup_input", "ip");
             self.remaining = setupFunc(request);
             self.buffer = new ByteBuffer;
-            say(sprintf("I have %d remaining", [ self.remaining ] ));
+            self.readSize = 16; // this should be configurable 
         }
         
         function readline() {
-            // use some buffering mechanism
+            // until we have a buffering system, do not implement this.
+            // it isn't all that sensible, after all
         }
 
         function readall() {
-            // here, too
+            var builder = new StringBuilder;
+            while(self.remaining > 0) {
+                string msg = self.read(self.readSize);
+                push(builder, msg);
+            }
+            return string(builder);
         }
 
         function read(int size) {
             self.buffer =: size;
             var reader = self.func;
             int readBytes = reader(self.buffer, size, self.request);
-            self.buffer =: readBytes;
-            return self.buffer.get_string("binary"); 
-        
+            if(readBytes > 0) {
+                self.remaining -= readBytes;
+                return self.buffer.get_chars(0, readBytes, "binary");
+            } else {
+                self.remaining = 0;
+                return "";
+            }
         }
     }
 
