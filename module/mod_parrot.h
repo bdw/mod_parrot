@@ -1,15 +1,16 @@
 #include <unistd.h>
-#include <libgen.h>
+#include <libgen.h> 
 #include "httpd.h"
 #include "http_config.h"
 #include "http_protocol.h"
 #include "ap_config.h"
 #include "apr.h"
 #include "apr_strings.h"
+/* here there be dragons */
 #include "parrot/api.h"
 #include "imcc/api.h"
-#include "config.h"
 
+#include "config.h"
 
 typedef struct {
   const char * loaderPath;
@@ -17,8 +18,6 @@ typedef struct {
   apr_table_t * languages;
 } mod_parrot_conf;
 
-void mod_parrot_io_new_input_handle(Parrot_PMC interp, request_rec *req, Parrot_PMC *handle);
-void mod_parrot_io_read_input_handle(Parrot_PMC interp, request_rec *req, Parrot_PMC handle);
 int mod_parrot_report_error(Parrot_PMC interp, request_rec *req);
 int mod_parrot_write(void * buf, size_t size, request_rec *req);
 int mod_parrot_read(void * buf, size_t size, request_rec * req);

@@ -1,19 +1,33 @@
 namespace apache {
     class output {
-        var func;
+        var writer;
         var request;
         var buffer;
+        var headerWriter;
 
         function output(var request) {
             self.request = request;
-            self.func = dlfunc(null, "mod_parrot_write", "ipip");
+            self.writer = dlfunc(null, "mod_parrot_write", "ipip");
+            self.headerWriter = dlfunc(null, "mod_parrot_header_out", "vPPPp");
             self.buffer = new ByteBuffer; // warn then, I dare you
         }
 
         function puts(string msg) {
-            var write = self.func;
+            var writer = self.writer;
             self.buffer =: msg;
-            return write(self.buffer, elements(self.buffer), self.request);
+            return writer(self.buffer, elements(self.buffer), self.request);
+        }
+
+
+        function header(string key, string value) {
+            var writer = self.headerWriter;
+            writer(getinterp(), key, value, self.request);
+        }
+
+        function headers(var headers) {
+            for(var k in headers) {
+                self.header(k, headers[k]);
+            }
         }
     }   
     
