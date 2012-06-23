@@ -12,6 +12,8 @@
 
 #include "config.h"
 
+#define DEFAULT_LOADER "echo.pbc"
+
 typedef struct {
   const char * loaderPath;
   const char * loader;

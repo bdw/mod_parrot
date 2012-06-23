@@ -1,6 +1,6 @@
 include ../config.mk
-FILES=mod_parrot.pbc apache.pbc
-OUTPUT=../build/mod_parrot.pbc ../build/apache.pbc
+FILES=echo.pbc apache.pbc
+OUTPUT=../build/echo.pbc ../build/apache.pbc
 
 $(OUTPUT): $(FILES)
 	cp $(FILES) $(BUILDDIR)/build

@@ -3,22 +3,6 @@
 #include <ctype.h>
 
 
-static char * header_convert(apr_pool_t *pool, char * header)  {
-	int idx;
-	char * word;
-	word = (strncasecmp("content", header, 7) ? 
-			apr_pstrcat(pool, "HTTP_", header, NULL) :
-			apr_pstrdup(pool, header));
-
-	for(idx = 0; word[idx]; idx++) {
-		if(isalpha(word[idx]) && islower(word[idx]))
-			word[idx] = toupper(word[idx]);
-		else if(!isalnum(word[idx]))
-			word[idx] = '_';
-	}
-	return word;
-}
-
 static char * ipaddr(apr_sockaddr_t *a) {
 	char * string;
 	apr_sockaddr_ip_get(&string, a);
@@ -78,11 +62,7 @@ Parrot_PMC mod_parrot_headers_in(Parrot_PMC interp, request_rec * req) {
 	array = apr_table_elts(req->headers_in);
 	entries = (apr_table_entry_t *) array->elts;
 	for(idx = 0; idx < array->nelts; idx++) {
-		if(!strcasecmp(entries[idx].key, "host"))
-			continue;
-        // should i put this here? or in winxed? i don't know how to do string conversion in b
-        key = header_convert(req->pool, entries[idx].key);
-		mod_parrot_hash_set(interp, hash, key, entries[idx].val);
+		mod_parrot_hash_set(interp, hash, entries[idx].key, entries[idx].val);
 	}
     return hash;
 }

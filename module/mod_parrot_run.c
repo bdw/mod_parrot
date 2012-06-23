@@ -21,7 +21,7 @@ Parrot_PMC mod_parrot_interpreter(mod_parrot_conf * conf) {
 
 extern module mod_parrot;
 /* this madness will be simplified in due time */ 
-static Parrot_PMC load_bytecode(Parrot_PMC interp, request_rec *req, char * filename)
+static Parrot_PMC load_bytecode(Parrot_PMC interp, request_rec *req, const char * filename)
 {
     Parrot_PMC bytecodePMC;
     Parrot_String fileNameStr;
@@ -39,8 +39,10 @@ int mod_parrot_run(Parrot_PMC interp, request_rec *req) {
     Parrot_PMC libraryPMC;
 	Parrot_PMC bytecodePMC;
     Parrot_PMC requestPMC;
+    mod_parrot_conf * conf = 
+        ap_get_module_config(req->server->module_config, &mod_parrot);
     libraryPMC = load_bytecode(interp, req, "apache.pbc");
-    bytecodePMC = load_bytecode(interp, req, "mod_parrot.pbc");
+    bytecodePMC = load_bytecode(interp, req, conf->loader);
     Parrot_api_wrap_pointer(interp, req, sizeof(request_rec), &requestPMC);
     if(!Parrot_api_run_bytecode(interp, libraryPMC, requestPMC)) {
         return mod_parrot_report_error(interp, req);

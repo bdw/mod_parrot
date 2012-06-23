@@ -25,7 +25,7 @@ static void * mod_parrot_create_config(apr_pool_t * pool, server_rec * server) {
     mod_parrot_conf * cfg = apr_pcalloc(pool, sizeof(mod_parrot_conf));
     if (cfg) {
         cfg->loaderPath = INSTALLDIR;
-        cfg->loader = "mod_parrot.pbc";
+        cfg->loader = DEFAULT_LOADER;
         cfg->languages = apr_table_make(pool, 5);
     } 
     return cfg;
