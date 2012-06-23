@@ -58,6 +58,7 @@ my %make = (
     HTTPD => $httpd,
 	FLAGS => qx/parrot_config embed-ldflags/ . ' ' . qx/parrot_config embed-cflags/,
 );
+
 chomp $make{$_} for (keys(%make));
 
 $make{FLAGS} =~ s/(-[lLI])(\S+)/$1 $2/g;

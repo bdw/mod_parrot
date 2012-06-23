@@ -32,7 +32,9 @@ namespace apache {
     }   
     
     class input {
-        var func;
+        var reader;
+        var headerReader;
+        var requestReader;
         var request;
         var remaining;
         var buffer;
@@ -40,7 +42,9 @@ namespace apache {
         
         function input(var request) {
             self.request = request;
-            self.func = dlfunc(null, "mod_parrot_read", "ipip");
+            self.reader = dlfunc(null, "mod_parrot_read", "ipip");
+            self.headerReader = dlfunc(null, "mod_parrot_headers_in", "PPp");
+            self.requestReader = dlfunc(null, "mod_parrot_request_parameters", "PPp");
             var setupFunc = dlfunc(null, "mod_parrot_setup_input", "ip");
             self.remaining = setupFunc(request);
             self.buffer = new ByteBuffer;
@@ -50,6 +54,7 @@ namespace apache {
         function readline() {
             // until we have a buffering system, do not implement this.
             // it isn't all that sensible, after all
+            
         }
 
         function readall() {
@@ -63,7 +68,7 @@ namespace apache {
 
         function read(int size) {
             self.buffer =: size;
-            var reader = self.func;
+            var reader = self.reader;
             int readBytes = reader(self.buffer, size, self.request);
             if(readBytes > 0) {
                 self.remaining -= readBytes;
@@ -72,6 +77,16 @@ namespace apache {
                 self.remaining = 0;
                 return "";
             }
+        }
+        
+        function headers() {
+            var reader = self.headerReader;
+            return reader(getinterp(), self.request);
+        }
+
+        function request() {
+            var reader = self.requestReader;
+            return reader(getinterp(), self.request);
         }
     }
 

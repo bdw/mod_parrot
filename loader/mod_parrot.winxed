@@ -1,10 +1,16 @@
 
 
 function main[main](var request) { 
-    say("Hello, world!");
-    print("1 + 1 = ", 1 + 1);
-    print("\n");
+    var request = getstdin().request();
+    for(string k in request) {
+        say(sprintf("%s: %s", [k, request[k]]));    
+    }   
+    var headers = getstdin().headers();
+    for(string k in headers) {
+        say(sprintf("%s: %s", [k, headers[k]]));
+    }   
     say(getstdin().readall());
+    
     getstdout().headers({ "X-Foo":"bar", "X-Quix": "quam"});
 }
 

@@ -1,43 +1,26 @@
 #include "mod_parrot.h"
 
-/* The static functions below should be in some mod_parrot_util file */
-static Parrot_PMC new_instance(Parrot_PMC i, char * class, Parrot_PMC initPMC) {
-	Parrot_PMC classPMC, keyPMC;
-	Parrot_String className;
-	Parrot_PMC instancePMC;
-	Parrot_api_string_import_ascii(i, class, &className);
-	Parrot_api_pmc_box_string(i, className, &keyPMC);
-	Parrot_api_pmc_get_class(i, keyPMC, &classPMC);
-	Parrot_api_pmc_new_from_class(i, classPMC, initPMC, &instancePMC);
-	return instancePMC;
-}
-
-static void hash_set(Parrot_PMC i, Parrot_PMC h, char * k, char * v) {
-	Parrot_String kS, vS; // key string, value string
-	Parrot_PMC vP;
-	Parrot_api_string_import_ascii(i, k, &kS);
-	Parrot_api_string_import_ascii(i, v, &vS);
-	Parrot_api_pmc_box_string(i, vS, &vP);
-	Parrot_api_pmc_set_keyed_string(i, h, kS, vP);
-}
-
 
 Parrot_PMC mod_parrot_interpreter(mod_parrot_conf * conf) {
 	Parrot_PMC interp, configHash;
     Parrot_PMC pir, pasm;
     Parrot_api_make_interpreter(NULL, 0, NULL, &interp);
-	configHash = new_instance(interp, "Hash", NULL);
-	hash_set(interp, configHash, "build_dir", BUILDDIR);
-	hash_set(interp, configHash, "versiondir", VERSIONDIR);
-	hash_set(interp, configHash, "libdir", LIBDIR);
+    /* this is to help parrot set up the right paths by itself,
+     * and yes, i do agree this is a bit of unneccesesary magic.
+     * Parrots, it appears, are magical birds after all. */
+	configHash = mod_parrot_new_hash(interp);
+	mod_parrot_hash_set(interp, configHash, "build_dir", BUILDDIR);
+	mod_parrot_hash_set(interp, configHash, "versiondir", VERSIONDIR);
+	mod_parrot_hash_set(interp, configHash, "libdir", LIBDIR);
 	Parrot_api_set_configuration_hash(interp, configHash);
+    /* no pir without these calls ;-) */
 	imcc_get_pir_compreg_api(interp, 1, &pir);
 	imcc_get_pasm_compreg_api(interp, 1, &pasm);
     return interp;
 }
 
 extern module mod_parrot;
-
+/* this madness will be simplified in due time */ 
 static Parrot_PMC load_bytecode(Parrot_PMC interp, request_rec *req, char * filename)
 {
     Parrot_PMC bytecodePMC;
@@ -62,6 +45,7 @@ int mod_parrot_run(Parrot_PMC interp, request_rec *req) {
     if(!Parrot_api_run_bytecode(interp, libraryPMC, requestPMC)) {
         return mod_parrot_report_error(interp, req);
     } 
+    /* TODO: build a more useful call signature than (request) for loaders */
     if(Parrot_api_run_bytecode(interp, bytecodePMC, requestPMC)) {
         return OK;
     } else {

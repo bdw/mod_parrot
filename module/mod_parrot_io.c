@@ -2,26 +2,6 @@
 #include <strings.h>
 #include <ctype.h>
 
-/* The static functions below should be in some mod_parrot_util file */
-static Parrot_PMC new_instance(Parrot_PMC i, char * class, Parrot_PMC initPMC) {
-	Parrot_PMC classPMC, keyPMC;
-	Parrot_String className;
-	Parrot_PMC instancePMC;
-	Parrot_api_string_import_ascii(i, class, &className);
-	Parrot_api_pmc_box_string(i, className, &keyPMC);
-	Parrot_api_pmc_get_class(i, keyPMC, &classPMC);
-	Parrot_api_pmc_new_from_class(i, classPMC, initPMC, &instancePMC);
-	return instancePMC;
-}
-
-static void hash_set(Parrot_PMC i, Parrot_PMC h, char * k, char * v) {
-	Parrot_String kS, vS; // key string, value string
-	Parrot_PMC vP;
-	Parrot_api_string_import_ascii(i, k, &kS);
-	Parrot_api_string_import_ascii(i, v, &vS);
-	Parrot_api_pmc_box_string(i, vS, &vP);
-	Parrot_api_pmc_set_keyed_string(i, h, kS, vP);
-}
 
 static char * header_convert(apr_pool_t *pool, char * header)  {
 	int idx;
@@ -55,29 +35,29 @@ static char * ipaddr(apr_sockaddr_t *a) {
 Parrot_PMC mod_parrot_request_parameters(Parrot_PMC interp, request_rec * req) {
     Parrot_PMC hash;
     /* todo, make this non-nasty. although it works */
-	hash = new_instance(interp, "Hash", NULL);
+	hash = mod_parrot_new_hash(interp);
 	
-	hash_set(interp, hash, "REQUEST_METHOD", (char*)req->method);
-	hash_set(interp, hash, "REQUEST_URI", req->unparsed_uri);
-	hash_set(interp, hash, "QUERY_STRING", req->args ? req->args : ""); 
-	hash_set(interp, hash, "HTTP_HOST", (char*)req->hostname);
-    hash_set(interp, hash, "SCRIPT_NAME", req->filename);
-    hash_set(interp, hash, "PATH_INFO", req->path_info);
-	hash_set(interp, hash, "SERVER_NAME", req->server->server_hostname);
-	hash_set(interp, hash, "SERVER_PROTOCOL", req->protocol);
+	mod_parrot_hash_set(interp, hash, "REQUEST_METHOD", (char*)req->method);
+	mod_parrot_hash_set(interp, hash, "REQUEST_URI", req->unparsed_uri);
+	mod_parrot_hash_set(interp, hash, "QUERY_STRING", req->args ? req->args : ""); 
+	mod_parrot_hash_set(interp, hash, "HTTP_HOST", (char*)req->hostname);
+    mod_parrot_hash_set(interp, hash, "SCRIPT_NAME", req->filename);
+    mod_parrot_hash_set(interp, hash, "PATH_INFO", req->path_info);
+	mod_parrot_hash_set(interp, hash, "SERVER_NAME", req->server->server_hostname);
+	mod_parrot_hash_set(interp, hash, "SERVER_PROTOCOL", req->protocol);
 
 	/* Network parameters. This should be simpler, but it isn't. */
-	hash_set(interp, hash, "SERVER_ADDR", ipaddr(req->connection->local_addr));
-	hash_set(interp, hash, "SERVER_PORT", 
+	mod_parrot_hash_set(interp, hash, "SERVER_ADDR", ipaddr(req->connection->local_addr));
+	mod_parrot_hash_set(interp, hash, "SERVER_PORT", 
              apr_itoa(req->pool, req->connection->local_addr->port));
 
-	hash_set(interp, hash, "REMOTE_ADDR", 
+	mod_parrot_hash_set(interp, hash, "REMOTE_ADDR", 
              ipaddr(req->connection->remote_addr));
-	hash_set(interp, hash, "REMOTE_PORT", 
+	mod_parrot_hash_set(interp, hash, "REMOTE_PORT", 
              apr_itoa(req->pool, req->connection->remote_addr->port));
 
     if(req->server->server_admin) /* I don't believe this is ever NULL */
-		hash_set(interp, hash, "SERVER_ADMIN", req->server->server_admin);
+		mod_parrot_hash_set(interp, hash, "SERVER_ADMIN", req->server->server_admin);
     return hash;
 }
 
@@ -92,15 +72,17 @@ Parrot_PMC mod_parrot_headers_in(Parrot_PMC interp, request_rec * req) {
 	const apr_array_header_t *array;
 	apr_table_entry_t * entries;
     Parrot_PMC hash;
+    char * key;
 	int idx;
-    hash = new_instance(interp, "HASH", NULL);
+    hash = mod_parrot_new_hash(interp);
 	array = apr_table_elts(req->headers_in);
 	entries = (apr_table_entry_t *) array->elts;
 	for(idx = 0; idx < array->nelts; idx++) {
 		if(!strcasecmp(entries[idx].key, "host"))
 			continue;
-		hash_set(interp, hash, header_convert(req->pool, entries[idx].key), 
-                 entries[idx].val);
+        // should i put this here? or in winxed? i don't know how to do string conversion in b
+        key = header_convert(req->pool, entries[idx].key);
+		mod_parrot_hash_set(interp, hash, key, entries[idx].val);
 	}
     return hash;
 }
