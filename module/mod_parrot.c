@@ -13,7 +13,7 @@ static int mod_parrot_handler(request_rec *req) {
     } 
     if(compiler) {
         Parrot_PMC interp = mod_parrot_interpreter(conf);
-        code = mod_parrot_run(interp, req); // result code
+        code = mod_parrot_run(interp, req, compiler); // result code
         Parrot_api_destroy_interpreter(interp); 
         return code;
     } 
@@ -34,7 +34,9 @@ static void * mod_parrot_create_config(apr_pool_t * pool, server_rec * server) {
 static const char * mod_parrot_set_loader_path(cmd_parms *cmd, void * dummy, const char * arg) {
     mod_parrot_conf * conf;
     conf = ap_get_module_config(cmd->server->module_config, &mod_parrot);
-    if(conf) {
+    if(conf) { // i really really want to push an array of paths here, but
+               // unfortunately, that doesn't seem to work. I'll have to
+               // investigate just why
         conf->loaderPath = arg;
     } /* we should check if the loaderpath is really a directory here */
     return NULL;

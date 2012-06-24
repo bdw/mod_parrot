@@ -1,15 +1,19 @@
+function main[main](var request, string compiler, string scriptName) {
+    apache.setup(request);
+    say("Loading compiler " + compiler + " and script " + scriptName);
 
-function main[main](var request) { 
     var headers = getstdin().headers();
     for(string k in headers) {
         getstdout().header("X-Echo-" + k, string(headers[k]));
     }
-    var request = getstdin().request();
+    var parameters = getstdin().request();
     print("Request\n-------\n");
-    for(string k in request) {
-        say(sprintf("%s: %s", [k, request[k]]));    
+    for(string k in parameters) {
+        say(sprintf("%s: %s", [k, parameters[k]]));    
     }
     print("\nPOST data\n=========\n");
     say(getstdin().readall());
+
 }
+
 

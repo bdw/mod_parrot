@@ -25,7 +25,7 @@ int mod_parrot_write(void * buf, size_t size, request_rec *req);
 int mod_parrot_read(void * buf, size_t size, request_rec * req);
 
 Parrot_PMC mod_parrot_interpreter(mod_parrot_conf * conf);
-int mod_parrot_run(Parrot_PMC interp, request_rec *req);
+int mod_parrot_run(Parrot_PMC interp, request_rec *req, const char * compiler);
 void mod_parrot_setup_args(Parrot_PMC interp, request_rec *req, Parrot_PMC *args);
 Parrot_PMC mod_parrot_new_hash(Parrot_PMC interp);
 void mod_parrot_hash_set(Parrot_PMC interp, Parrot_PMC hash, char * key, char * value);

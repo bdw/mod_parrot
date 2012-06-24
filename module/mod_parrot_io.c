@@ -56,7 +56,6 @@ Parrot_PMC mod_parrot_headers_in(Parrot_PMC interp, request_rec * req) {
 	const apr_array_header_t *array;
 	apr_table_entry_t * entries;
     Parrot_PMC hash;
-    char * key;
 	int idx;
     hash = mod_parrot_new_hash(interp);
 	array = apr_table_elts(req->headers_in);

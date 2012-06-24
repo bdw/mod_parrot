@@ -1,6 +1,6 @@
 include ../config.mk
-FILES=echo.pbc apache.pbc
-OUTPUT=../build/echo.pbc ../build/apache.pbc
+FILES=cgi.pbc echo.pbc apache.pbc
+OUTPUT=../build/echo.pbc ../build/apache.pbc ../build/cgi.pbc
 
 $(OUTPUT): $(FILES)
 	cp $(FILES) $(BUILDDIR)/build

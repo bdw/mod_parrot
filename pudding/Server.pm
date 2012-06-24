@@ -117,12 +117,18 @@ supplied contents. The served file will be placed in DocumentRoot.
 =cut
 
 sub serve {
-	my ($self, $file, $contents) = @_;
+	my ($self, $file, $contents, $mode) = @_;
+	$mode ||= 0644;
+	my $new = $self->{DocumentRoot}  . '/' . $file;
+	# ensure the availability of a document root
+    make_path($self->{DocumentRoot}) unless -d $self->{DocumentRoot};
+
     if ( -f $file) {
-        copy($file, $self->{DocumentRoot});
+        copy($file, $new);
     } elsif(defined $contents) {
-        write_file($self->{DocumentRoot} . '/' . basename($file), $contents);
+        write_file($new, $contents);
     }
+	chmod $mode, $new;
 }
 
 =head2 Debug a server using gdb

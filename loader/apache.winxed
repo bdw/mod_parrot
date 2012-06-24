@@ -18,7 +18,6 @@ namespace apache {
             return writer(self.buffer, elements(self.buffer), self.request);
         }
 
-
         function header(string key, string value) {
             var writer = self.headerWriter;
             writer(getinterp(), key, value, self.request);
@@ -49,13 +48,11 @@ namespace apache {
             self.requestReader = dlfunc(null, "mod_parrot_request_parameters", "PPp");
             self.buffer = new ByteBuffer;
             self.readSize = 16; // this should be configurable 
-            self.remaining = self.bytesRead = -1;
-        }
-
-        function setup() {
             var setupFunc = dlfunc(null, "mod_parrot_setup_input", "ip");
             self.remaining = setupFunc(request);
+            self.bytesRead = 0;
         }
+
         
         function readline() {
             // until we have a buffering system, do not implement this.
@@ -72,14 +69,12 @@ namespace apache {
         }
 
         function read(int size) {
-            if(self.bytesRead < 0) {
-                
-            }
             self.buffer =: size;
             var reader = self.reader;
             int readBytes = reader(self.buffer, size, self.request);
             if(readBytes > 0) {
                 self.remaining -= readBytes;
+                self.bytesRead += readBytes;
                 return self.buffer.get_chars(0, readBytes, "binary");
             } else {
                 self.remaining = 0;

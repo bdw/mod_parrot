@@ -35,20 +35,34 @@ static Parrot_PMC load_bytecode(Parrot_PMC interp, request_rec *req, const char 
     return bytecodePMC;
 }
 
-int mod_parrot_run(Parrot_PMC interp, request_rec *req) {
-    Parrot_PMC libraryPMC;
-	Parrot_PMC bytecodePMC;
-    Parrot_PMC requestPMC;
+int mod_parrot_run(Parrot_PMC interp, request_rec *req, const char * compilerName) {
+    Parrot_PMC library, loader, mainRoutine;
+    Parrot_PMC request, contextObject;
+    Parrot_String compiler, scriptName;
     mod_parrot_conf * conf = 
         ap_get_module_config(req->server->module_config, &mod_parrot);
-    libraryPMC = load_bytecode(interp, req, "apache.pbc");
-    bytecodePMC = load_bytecode(interp, req, conf->loader);
-    Parrot_api_wrap_pointer(interp, req, sizeof(request_rec), &requestPMC);
-    if(!Parrot_api_run_bytecode(interp, libraryPMC, requestPMC)) {
+    const char *preload[] = {
+        "apache.pbc"
+    };
+    int i;
+
+    Parrot_api_string_import_ascii(interp, compilerName, &compiler);
+    Parrot_api_string_import_ascii(interp, req->filename, &scriptName);
+    for(i = 0; i < (sizeof(preload)/sizeof(*preload)); i++) {
+        library = load_bytecode(interp, req, preload[i]);
+        if(!Parrot_api_ready_bytecode(interp, library, &mainRoutine)) {
+            return mod_parrot_report_error(interp, req);
+        } 
+    }
+    if(!Parrot_api_wrap_pointer(interp, req, sizeof(request_rec), &request)) {
         return mod_parrot_report_error(interp, req);
-    } 
-    /* TODO: build a more useful call signature than (request) for loaders */
-    if(Parrot_api_run_bytecode(interp, bytecodePMC, requestPMC)) {
+    }
+    loader = load_bytecode(interp, req, conf->loader);
+    Parrot_api_ready_bytecode(interp, loader, &mainRoutine);
+    Parrot_api_pmc_new_call_object(interp, &contextObject);
+    Parrot_api_pmc_setup_signature(interp, contextObject, "PSS->", 
+                                   request, compiler, scriptName);
+    if(Parrot_api_pmc_invoke(interp, mainRoutine, contextObject)) {
         return OK;
     } else {
         return mod_parrot_report_error(interp, req);

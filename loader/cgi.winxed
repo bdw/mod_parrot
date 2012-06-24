@@ -1,0 +1,71 @@
+
+$include_const "cclass.pasm";
+
+inline find_not_cclass(int cclass, string s, int startIdx, int length) return int {
+    int idx;
+    ${ find_not_cclass idx, cclass, s, startIdx, length };
+    return idx;
+}
+namespace cgi {
+    function cgiify(var value) {
+        for(int i = 0; i < length(value); i++) {
+            i = find_not_cclass(CCLASS_ALPHANUMERIC, value, i, length(value) - i);
+            if(i < length(value))
+                value[i] = "_";
+        }   
+        value = upcase(value);
+        if(substr(value, 0, 7) == "CONTENT")
+            return value;
+        return "HTTP_" + string(value);
+    }
+
+	/* i don't know which of those tags does the trick 
+	 * but one does */
+	function init[anon, load, init]() {
+		loadlib('os');
+		loadlib('file');
+	}
+	
+    function run(string language, string fileName) {
+        try {
+            var os = new OS;
+			var file = new File;
+			load_language(language);
+			var compiler = compreg(language);
+			if(compiler == null) {
+				die("Could not find compiler for " + language);
+			}
+			if(file.exists(fileName) && os.can_read(fileName) &&
+				os.can_execute(fileName)) {
+				var handle = new FileHandle;
+				handle.open(fileName, "r");
+				var bytecode = compiler.compile(handle.readall());
+				var main = bytecode.main_sub();
+				main([ fileName ]);	
+			} else {
+				die("Could not execute " + fileName);
+			}	
+        } catch(error) {
+            say(error.message);
+        }
+    }
+
+    function main[main](var request, string compiler, string fileName) {
+        apache.setup(request);
+        var env = new Env;
+        var headers = getstdin().headers();
+        var parameters = getstdin().request();
+        /* put headers first, we don't want the request variables to be overridden */
+
+        for(string k in headers) {
+            string value;
+            env[cgiify(k)] = headers[k];
+        }
+        for(string k in parameters) {
+            env[k] = parameters[k];
+        }
+
+        run(compiler, fileName);
+    }
+
+}

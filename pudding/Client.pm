@@ -2,42 +2,30 @@
 use strict;
 use warnings;
 package Client;
+use Exporter 'import';
 use HTTP::Tiny;
 use Server;
 
-=head1 Testing request againts output
-
-TODO: this should have a procedural (or functional, even) interface.
+our @EXPORT = qw(content status);
 
 
-=cut
-
-sub new {
-	my ($class, $server) = @_;
-    bless {
-        host => $server->{Hostname} || 'localhost',
-        port => $server->{Listen} || 80,
-        http => HTTP::Tiny->new(),
-    }, $class;
+our $server;
+our $client;
+sub setup {
+	$server = shift;
+    $client = HTTP::Tiny->new();
 }	
 
 sub url {
-    sprintf('http://%s:%s/%s', $_[0]->{host}, $_[0]->{port}, $_[1]);
+    sprintf('http://%s:%s/%s', $server->{Hostname} || 'localhost', $server->{Listen} || 80, shift);
 }
 
-sub is_get {
-	my ($self, $uri, $exp) = @_;
-    print $self->{http}->get(url(@_))->{content};
+sub content {
+    $client->get(url(shift))->{content};
 }
 
-sub is_ok {
-    my ($self, $uri) = @_;
-    $self->{http}->get(url(@_))->{status} == 200;
-}
-
-sub is_status {
-    my ($self, $uri, $status) = @_;
-    $self->{http}->get(url(@_))->{status} == $status;
+sub status {
+    $client->get(url(shift))->{status};
 }
 
 1;
