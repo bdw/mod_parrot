@@ -6,7 +6,7 @@ use Exporter 'import';
 use HTTP::Tiny;
 use Server;
 
-our @EXPORT = qw(content status);
+our @EXPORT = qw(content status headers response);
 
 
 our $server;
@@ -26,6 +26,14 @@ sub content {
 
 sub status {
     $client->get(url(shift))->{status};
+}
+
+sub headers {
+    $client->get(url(shift))->{headers};
+}
+
+sub response {
+    $client->get(url(shift));
 }
 
 1;

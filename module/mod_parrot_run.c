@@ -29,7 +29,6 @@ static Parrot_PMC load_bytecode(Parrot_PMC interp, request_rec *req, const char 
     char * fullName = (conf ? 
                        apr_pstrcat(req->pool, conf->loaderPath, "/", filename, NULL) :
                        apr_pstrcat(req->pool, INSTALLDIR, "/", filename, NULL));
-    puts(fullName);
     Parrot_api_string_import_ascii(interp, fullName, &fileNameStr);
     Parrot_api_load_bytecode_file(interp, fileNameStr, &bytecodePMC);
     return bytecodePMC;

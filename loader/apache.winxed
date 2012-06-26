@@ -11,12 +11,18 @@ namespace apache {
             self.headerWriter = dlfunc(null, "mod_parrot_header_out", "vPPPp");
             self.buffer = new ByteBuffer; // warn then, I dare you
         }
-
+        /* i split these functions because winxed does not have an easy way
+         * to call super() methods. puts() is the entry point for the C
+         * layer, write() for subclasses */
         function puts(string msg) {
+            self.write(msg);
+        }
+
+        function write(string msg) {
             var writer = self.writer;
             self.buffer =: msg;
             return writer(self.buffer, elements(self.buffer), self.request);
-        }
+        }   
 
         function header(string key, string value) {
             var writer = self.headerWriter;
