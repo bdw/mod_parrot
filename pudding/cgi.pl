@@ -3,7 +3,7 @@ use strict;
 use warnings;
 use Server;
 use Client;
-use Test::More tests => 2;
+use Test::More tests => 3;
 use config;
 use Data::Dumper;
 my $server = Server->new($config::HTTPD);

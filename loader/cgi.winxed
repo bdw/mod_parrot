@@ -8,31 +8,31 @@ inline find_not_cclass(int cclass, string s, int startIdx, int length) return in
 }
 namespace cgi {
     class output : apache.output {
-        var isContent;
-        
         function puts(string msg) {
-            if(self.isContent) {
-                return self.write(msg);
-            } 
-            var headers = split("\n", msg);
-            while(elements(headers) > 0) {
-                string h = shift_string(headers);
-                int i = indexof(h, ":");
-                if(i < 0) { // no more headers, and yes, that means that a
-                            // faulty header causes mp to spit out all
-                            // following headers. though luck 
-                    unshift(headers, h);
-                    break;
+            if(self.bytesWritten == 0) {
+                var lines = split("\n", msg);
+                while(elements(lines) > 0) {
+                    string payload = shift_string(lines);
+                    int i = indexof(payload, ':');
+                    if(indexof(payload, "HTTP") == 0) {
+                        // read a status code cleverly
+                        continue;
+                    } else if(i > 0) {
+                        // must be a header                    
+                        string key = substr(payload, 0, i);
+                        string val = substr(payload, i + 1);
+                        self.header(key, val);
+                    } else { // it is either the end of headers or a
+                             // content line
+                        if(length(payload) > 0)
+                            unshift(lines, payload);
+                        break;
+                    }
                 }
-                string key = substr(h, 0, i);
-                string val = substr(h, i + 1);
-                self.header(key, val);
-            }
-            // if there are any lines left, print them out
-            if(length(headers) > 0) {
-                string content = join("\n", headers);
-                self.isContent = true;
-                self.write(content);
+                if(elements(lines) > 0) 
+                    self.write(join("\n", lines));
+            } else {
+                self.write(msg);
             }
         }
     }

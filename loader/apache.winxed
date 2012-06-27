@@ -1,27 +1,36 @@
 namespace apache {
     class output {
-        var writer;
         var request;
         var buffer;
+        var contentWriter;
         var headerWriter;
+        var bytesWritten; // content bytes only
 
         function output(var request) {
+            self.init(request);
+        }
+
+        function init(var request) {
             self.request = request;
-            self.writer = dlfunc(null, "mod_parrot_write", "ipip");
+            self.contentWriter = dlfunc(null, "mod_parrot_write", "ipip");
             self.headerWriter = dlfunc(null, "mod_parrot_header_out", "vPPPp");
             self.buffer = new ByteBuffer; // warn then, I dare you
+            self.bytesWritten = 0;
         }
+
         /* i split these functions because winxed does not have an easy way
          * to call super() methods. puts() is the entry point for the C
          * layer, write() for subclasses */
         function puts(string msg) {
-            self.write(msg);
+            return self.write(msg);
         }
 
         function write(string msg) {
-            var writer = self.writer;
+            var writer = self.contentWriter;
             self.buffer =: msg;
-            return writer(self.buffer, elements(self.buffer), self.request);
+            int b = writer(self.buffer, elements(self.buffer), self.request);
+            self.bytesWritten += b; // should check if this is larger than 0
+            return b;
         }   
 
         function header(string key, string value) {
@@ -29,15 +38,10 @@ namespace apache {
             writer(getinterp(), key, value, self.request);
         }
 
-        function headers(var headers) {
-            for(var k in headers) {
-                self.header(k, headers[k]);
-            }
-        }
     }   
     
     class input {
-        var reader;
+        var contentReader;
         var headerReader;
         var requestReader;
         var setup;
@@ -46,10 +50,14 @@ namespace apache {
         var bytesRead;
         var buffer;
         var readSize;
-        
+
         function input(var request) {
+            self.init(request);
+        }
+
+        function init(var request) {
             self.request = request;
-            self.reader = dlfunc(null, "mod_parrot_read", "ipip");
+            self.contentReader = dlfunc(null, "mod_parrot_read", "ipip");
             self.headerReader = dlfunc(null, "mod_parrot_headers_in", "PPp");
             self.requestReader = dlfunc(null, "mod_parrot_request_parameters", "PPp");
             self.buffer = new ByteBuffer;
@@ -58,7 +66,6 @@ namespace apache {
             self.remaining = setupFunc(request);
             self.bytesRead = 0;
         }
-
         
         function readline() {
             // until we have a buffering system, do not implement this.
@@ -76,7 +83,7 @@ namespace apache {
 
         function read(int size) {
             self.buffer =: size;
-            var reader = self.reader;
+            var reader = self.contentReader;
             int readBytes = reader(self.buffer, size, self.request);
             if(readBytes > 0) {
                 self.remaining -= readBytes;
