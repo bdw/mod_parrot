@@ -22,7 +22,7 @@ sub writeconf {
 	my %conf = @_;
 	open my $out, '>', my $filename = $conf{ServerRoot} . '/httpd.conf';
 	local ($\, $,) = ("\n", " ");
-	for (qw(ServerRoot PidFile DocumentRoot ErrorLog Listen)) {
+	for (qw(ServerName ServerRoot PidFile DocumentRoot ErrorLog Listen)) {
 		print $out $_, $conf{$_};
 	}	
     if(ref (my $modules = $conf{LoadModule}) eq 'HASH') {
@@ -62,6 +62,7 @@ sub new {
     $directory  ||= tempdir();
     bless {
         Process => $process,
+		ServerName => 'nifftuk.dev',
         ServerRoot => $directory,
         PidFile => $directory . '/httpd.pid',
         DocumentRoot => $directory . '/docs',
