@@ -10,6 +10,7 @@ static char * ipaddr(apr_sockaddr_t *a) {
 }
 
 
+
 /**
  * Fetch the request parameters
  * @param Parrot_PMC i The interpreter
@@ -44,6 +45,7 @@ Parrot_PMC mod_parrot_request_parameters(Parrot_PMC interp, request_rec * req) {
 		mod_parrot_hash_set(interp, hash, "SERVER_ADMIN", req->server->server_admin);
     return hash;
 }
+
 
 
 /**
@@ -81,6 +83,10 @@ void mod_parrot_header_out(Parrot_PMC interp, Parrot_PMC k, Parrot_PMC v, reques
     Parrot_api_string_free_exported_ascii(interp, value);
 }
 
+void mod_parrot_set_status(request_rec * req, int code) {
+    req->status = code;
+}
+
 /**
  * Write a buffer of specific length to apache
  *
@@ -98,7 +104,7 @@ int mod_parrot_write(void * b, size_t s, request_rec * r) {
  * @param request_rec * req The request from which to read
  * @return int the amount of bytes remainig to be read
  **/
-int mod_parrot_setup_input(request_rec *req) {
+int mod_parrot_open_input(request_rec *req) {
     if(ap_setup_client_block(req, REQUEST_CHUNKED_ERROR))
         return 0;
     if(!ap_should_client_block(req))

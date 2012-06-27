@@ -1,7 +1,7 @@
 function main[main](var request, string compiler, string scriptName) {
     apache.setup(request);
     say("Loading compiler " + compiler + " and script " + scriptName);
-
+    getstdout().status(203);
     var headers = getstdin().headers();
     for(string k in headers) {
         getstdout().header("X-Echo-" + k, string(headers[k]));

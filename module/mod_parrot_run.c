@@ -21,8 +21,8 @@ Parrot_PMC mod_parrot_interpreter(mod_parrot_conf * conf) {
 
 extern module mod_parrot;
 /* this madness will be simplified in due time */ 
-static Parrot_PMC load_bytecode(Parrot_PMC interp, request_rec *req, const char * filename)
-{
+static Parrot_PMC load_bytecode(Parrot_PMC interp, request_rec *req, 
+                                const char * filename) {
     Parrot_PMC bytecodePMC;
     Parrot_String fileNameStr;
     mod_parrot_conf * conf = ap_get_module_config(req->server->module_config, &mod_parrot);

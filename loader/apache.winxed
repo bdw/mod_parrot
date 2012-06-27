@@ -4,17 +4,24 @@ namespace apache {
         var buffer;
         var contentWriter;
         var headerWriter;
+        var statusWriter;
         var bytesWritten; // content bytes only
-
+        
         function output(var request) {
             self.init(request);
         }
-
+        
         function init(var request) {
-            self.request = request;
+            // for now, keep the auto-opening
             self.contentWriter = dlfunc(null, "mod_parrot_write", "ipip");
             self.headerWriter = dlfunc(null, "mod_parrot_header_out", "vPPPp");
+            self.statusWriter = dlfunc(null, "mod_parrot_set_status", "vpi");
             self.buffer = new ByteBuffer; // warn then, I dare you
+            self.open(request);
+        }
+
+        function open(var request) {
+            self.request = request;
             self.bytesWritten = 0;
         }
 
@@ -32,6 +39,11 @@ namespace apache {
             self.bytesWritten += b; // should check if this is larger than 0
             return b;
         }   
+
+        function status(int val) {
+            var writer = self.statusWriter;
+            writer(self.request, val);
+        }
 
         function header(string key, string value) {
             var writer = self.headerWriter;
@@ -62,11 +74,15 @@ namespace apache {
             self.requestReader = dlfunc(null, "mod_parrot_request_parameters", "PPp");
             self.buffer = new ByteBuffer;
             self.readSize = 16; // this should be configurable 
-            var setupFunc = dlfunc(null, "mod_parrot_setup_input", "ip");
-            self.remaining = setupFunc(request);
-            self.bytesRead = 0;
+            self.open(request);
         }
         
+        function open(var request) {
+            var open = dlfunc(null, "mod_parrot_open_input", "ip");
+            self.remaining = open(request);
+            self.bytesRead = 0;
+        }
+
         function readline() {
             // until we have a buffering system, do not implement this.
             // it isn't all that sensible, after all
