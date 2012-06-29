@@ -3,7 +3,7 @@ use strict;
 use warnings;
 use Server;
 use Client;
-use Test::More tests => 3;
+use Test::More tests => 7;
 use config;
 use Data::Dumper;
 my $server = Server->new($config::HTTPD);
@@ -27,10 +27,34 @@ function main[main]() {
 }
 WINXED
 
-$server->serve('example.winxed', $winxed, 0755);
-$server->serve('example2.winxed', $withHeaders, 0755);
+my $withStatus = <<WINXED;
+function main[main]() {
+    say("HTTP/1.1 202 Accepted");
+    say("hello, world!");
+}
+WINXED
+
+my $otherStatus = <<WINXED;
+function main[main]() {
+    say("Status: 202");
+    say('bye world');
+}
+
+WINXED
+
+$server->serve('runs-code.winxed', $winxed, 0755);
+$server->serve('has-headers.winxed', $withHeaders, 0755);
+$server->serve('unexecutable.winxed', $winxed, 0644);
+$server->serve('statusCode.winxed', $withStatus, 0755);
+$server->serve('otherStatus.wxd', $otherStatus, 0755);
 $server->start();
 Client::setup($server);
-is(content('example.winxed'), 'hello world');
-is(headers('example2.winxed')->{'x-foo'}, 'bar');
-is(content('example2.winxed'), "Some content\n");
+is(content('runs-code.winxed'), 'hello world');
+is(headers('has-headers.winxed')->{'x-foo'}, 'bar');
+is(content('has-headers.winxed'), "Some content\n");
+is(status('statusCode.winxed'), 202, 'custom status code');
+is(status('otherStatus.wxd'), 202, 'another way to report a custom error code');
+# errors
+is(status('unexecutable.winxed'), 403, 'not executable');
+is(status('does-not-exist.winxed'), 404, 'not found');
+

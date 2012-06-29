@@ -6,8 +6,9 @@ clean:
 	make -C module clean
 	make -C loader clean
 
-debug:
+debug: all
 	@perl -Ipudding pudding/debug.pl
 
-test:
-	@perl -Ipudding pudding/test.pl
+test: all
+	@perl -Ipudding pudding/echo.pl
+	@perl -Ipudding pudding/cgi.pl

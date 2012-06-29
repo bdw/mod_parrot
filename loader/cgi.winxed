@@ -1,11 +1,25 @@
 
 $include_const "cclass.pasm";
 
+inline find_cclass(int cclass, string s, int startIdx, int length) return int
+{
+    int idx;
+    ${ find_cclass idx, cclass, s, startIdx, length };
+    return idx;
+}
+
 inline find_not_cclass(int cclass, string s, int startIdx, int length) return int {
     int idx;
     ${ find_not_cclass idx, cclass, s, startIdx, length };
     return idx;
 }
+
+inline cut_number(string s) return int {
+    int i = find_cclass(CCLASS_NUMERIC, s, 0, length(s));
+    int j = find_not_cclass(CCLASS_NUMERIC, s, i, length(s)-i);
+    return int(substr(s, i, j - i));
+}
+
 namespace cgi {
     class output : apache.output {
         function puts(string msg) {
@@ -15,13 +29,16 @@ namespace cgi {
                     string payload = shift_string(lines);
                     int i = indexof(payload, ':');
                     if(indexof(payload, "HTTP") == 0) {
-                        // read a status code cleverly
-                        continue;
+                        string s = substr(payload, 8);
+                        self.status(cut_number(s));                                                
                     } else if(i > 0) {
                         // must be a header                    
                         string key = substr(payload, 0, i);
                         string val = substr(payload, i + 1);
-                        self.header(key, val);
+                        if(upcase(key) == "STATUS")
+                            self.status(cut_number(val));
+                        else
+                            self.header(key, val);
                     } else { // it is either the end of headers or a
                              // content line
                         if(length(payload) > 0)
@@ -57,6 +74,10 @@ namespace cgi {
 		loadlib('file');
 	}
 	
+    function stop(int code, string msg) {
+        throw new apache.error(code, msg);
+    }
+
     function run(string language, string fileName) {
         try {
             var os = new OS;
@@ -64,20 +85,26 @@ namespace cgi {
 			load_language(language);
 			var compiler = compreg(language);
 			if(compiler == null) {
-				die("Could not find compiler for " + language);
+                stop(500, 'Cannot load the configured compiler');
 			}
-			if(file.exists(fileName) && os.can_read(fileName) &&
-				os.can_execute(fileName)) {
+			if(!file.exists(fileName)) {
+                stop(404, fileName + " not found");
+            } 
+            if(os.can_read(fileName) && os.can_execute(fileName)) {
 				var handle = new FileHandle;
 				handle.open(fileName, "r");
 				var bytecode = compiler.compile(handle.readall());
 				var main = bytecode.main_sub();
 				main([ fileName ]);	
 			} else {
-				die("Could not execute " + fileName);
+                stop(403, "Cannot execute " + fileName);
 			}	
         } catch(error) {
-            say(error.message);
+            try {
+                error.report();
+            } catch(e) {
+                getstderr().print(e.message);
+            }
         }
     }
 

@@ -1,4 +1,5 @@
 namespace apache {
+    
     class output {
         var request;
         var buffer;
@@ -121,6 +122,24 @@ namespace apache {
             return reader(getinterp(), self.request);
         }
     }
+
+    class error : Exception {
+        var code;
+        var msg;
+        function error(int code, string msg) {
+            self.code = code;
+            self.msg = msg;
+        }
+
+        function report() {
+            var out = getstdout();
+            if(out instanceof output) {
+                out.status(self.code);
+            }
+            getstderr().print(string(self.msg) + "\n");
+        }
+    }
+
 
     function setup[main](var request) {
         getinterp().stdin_handle(new input(request));
