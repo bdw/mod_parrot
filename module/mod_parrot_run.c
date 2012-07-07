@@ -8,10 +8,10 @@ Parrot_PMC mod_parrot_interpreter(mod_parrot_conf * conf) {
     /* this is to help parrot set up the right paths by itself,
      * and yes, i do agree this is a bit of unneccesesary magic.
      * Parrots, it appears, are magical birds after all. */
-	configHash = mod_parrot_new_hash(interp);
-	mod_parrot_hash_set(interp, configHash, "build_dir", BUILDDIR);
-	mod_parrot_hash_set(interp, configHash, "versiondir", VERSIONDIR);
-	mod_parrot_hash_set(interp, configHash, "libdir", LIBDIR);
+	configHash = mod_parrot_hash_new(interp);
+	mod_parrot_hash_put(interp, configHash, "build_dir", BUILDDIR);
+	mod_parrot_hash_put(interp, configHash, "versiondir", VERSIONDIR);
+	mod_parrot_hash_put(interp, configHash, "libdir", LIBDIR);
 	Parrot_api_set_configuration_hash(interp, configHash);
     /* no pir without these calls ;-) */
 	imcc_get_pir_compreg_api(interp, 1, &pir);

@@ -56,7 +56,9 @@ my %make = (
 	BUILDDIR => getcwd(),
     APXS => $apxs,
     HTTPD => $httpd,
-	FLAGS => qx/parrot_config embed-ldflags/ . ' ' . qx/parrot_config embed-cflags/,
+	FLAGS => qx/parrot_config embed-ldflags/ . ' ' . 
+             qx/parrot_config embed-cflags/ . ' ' . 
+             qx/pkg-config libffi --cflags/
 );
 
 chomp $make{$_} for (keys(%make));

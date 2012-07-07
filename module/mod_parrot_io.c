@@ -20,29 +20,29 @@ static char * ipaddr(apr_sockaddr_t *a) {
 Parrot_PMC mod_parrot_request_parameters(Parrot_PMC interp, request_rec * req) {
     Parrot_PMC hash;
     /* todo, make this non-nasty. although it works */
-	hash = mod_parrot_new_hash(interp);
+	hash = mod_parrot_hash_new(interp);
 	
-	mod_parrot_hash_set(interp, hash, "REQUEST_METHOD", (char*)req->method);
-	mod_parrot_hash_set(interp, hash, "REQUEST_URI", req->unparsed_uri);
-	mod_parrot_hash_set(interp, hash, "QUERY_STRING", req->args ? req->args : ""); 
-	mod_parrot_hash_set(interp, hash, "HTTP_HOST", (char*)req->hostname);
-    mod_parrot_hash_set(interp, hash, "SCRIPT_NAME", req->filename);
-    mod_parrot_hash_set(interp, hash, "PATH_INFO", req->path_info);
-	mod_parrot_hash_set(interp, hash, "SERVER_NAME", req->server->server_hostname);
-	mod_parrot_hash_set(interp, hash, "SERVER_PROTOCOL", req->protocol);
+	mod_parrot_hash_put(interp, hash, "REQUEST_METHOD", (char*)req->method);
+	mod_parrot_hash_put(interp, hash, "REQUEST_URI", req->unparsed_uri);
+	mod_parrot_hash_put(interp, hash, "QUERY_STRING", req->args ? req->args : ""); 
+	mod_parrot_hash_put(interp, hash, "HTTP_HOST", (char*)req->hostname);
+    mod_parrot_hash_put(interp, hash, "SCRIPT_NAME", req->filename);
+    mod_parrot_hash_put(interp, hash, "PATH_INFO", req->path_info);
+	mod_parrot_hash_put(interp, hash, "SERVER_NAME", req->server->server_hostname);
+	mod_parrot_hash_put(interp, hash, "SERVER_PROTOCOL", req->protocol);
 
 	/* Network parameters. This should be simpler, but it isn't. */
-	mod_parrot_hash_set(interp, hash, "SERVER_ADDR", ipaddr(req->connection->local_addr));
-	mod_parrot_hash_set(interp, hash, "SERVER_PORT", 
+	mod_parrot_hash_put(interp, hash, "SERVER_ADDR", ipaddr(req->connection->local_addr));
+	mod_parrot_hash_put(interp, hash, "SERVER_PORT", 
              apr_itoa(req->pool, req->connection->local_addr->port));
 
-	mod_parrot_hash_set(interp, hash, "REMOTE_ADDR", 
+	mod_parrot_hash_put(interp, hash, "REMOTE_ADDR", 
              ipaddr(req->connection->remote_addr));
-	mod_parrot_hash_set(interp, hash, "REMOTE_PORT", 
+	mod_parrot_hash_put(interp, hash, "REMOTE_PORT", 
              apr_itoa(req->pool, req->connection->remote_addr->port));
 
     if(req->server->server_admin) /* I don't believe this is ever NULL */
-		mod_parrot_hash_set(interp, hash, "SERVER_ADMIN", req->server->server_admin);
+		mod_parrot_hash_put(interp, hash, "SERVER_ADMIN", req->server->server_admin);
     return hash;
 }
 
@@ -59,29 +59,30 @@ Parrot_PMC mod_parrot_headers_in(Parrot_PMC interp, request_rec * req) {
 	apr_table_entry_t * entries;
     Parrot_PMC hash;
 	int idx;
-    hash = mod_parrot_new_hash(interp);
+    hash = mod_parrot_hash_new(interp);
 	array = apr_table_elts(req->headers_in);
 	entries = (apr_table_entry_t *) array->elts;
 	for(idx = 0; idx < array->nelts; idx++) {
-		mod_parrot_hash_set(interp, hash, entries[idx].key, entries[idx].val);
+		mod_parrot_hash_put(interp, hash, entries[idx].key, entries[idx].val);
 	}
     return hash;
 }
 
+
 /**
- * I laugh in the face of inefficiency
+ * I laugh in the face of inefficiency 
  **/
-void mod_parrot_header_out(Parrot_PMC interp, Parrot_PMC k, Parrot_PMC v, request_rec *req) {
-    Parrot_String kS, vS;
-    char * key, * value;
-    Parrot_api_pmc_get_string(interp, k, &kS);
-    Parrot_api_pmc_get_string(interp, v, &vS);
-    Parrot_api_string_export_ascii(interp, kS, &key);
-    Parrot_api_string_export_ascii(interp, vS, &value);
-    apr_table_set(req->headers_out, key, value);
-    Parrot_api_string_free_exported_ascii(interp, key);
-    Parrot_api_string_free_exported_ascii(interp, value);
+void mod_parrot_header_out(Parrot_PMC interp_pmc, Parrot_PMC key_pmc, 
+                           Parrot_PMC val_pmc, request_rec *req) {
+    char * key = mod_parrot_export_cstring(interp_pmc, key_pmc);
+    char * val = mod_parrot_export_cstring(interp_pmc, val_pmc);
+    apr_table_set(req->headers_out, key, val);
+    mod_parrot_free_cstring(interp_pmc, key);
+    mod_parrot_free_cstring(interp_pmc, val);
 }
+
+
+
 
 void mod_parrot_set_status(request_rec * req, int code) {
     req->status = code;

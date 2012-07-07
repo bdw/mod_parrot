@@ -6,8 +6,11 @@ use Client;
 use Test::More tests => 7;
 use config;
 use Data::Dumper;
+
 my $server = Server->new($config::HTTPD);
-$server->loadModule( mod_parrot => $config::BUILDDIR . '/build/mod_parrot.so');
+$server->loadModule( 
+    mod_parrot => $config::BUILDDIR . '/build/mod_parrot.so'
+);
 
 $server->configure( 
     ParrotLoader => 'cgi.pbc',
@@ -49,9 +52,9 @@ $server->serve('statusCode.winxed', $withStatus, 0755);
 $server->serve('otherStatus.wxd', $otherStatus, 0755);
 $server->start();
 Client::setup($server);
-is(content('runs-code.winxed'), 'hello world');
-is(headers('has-headers.winxed')->{'x-foo'}, 'bar');
-is(content('has-headers.winxed'), "Some content\n");
+is(content('runs-code.winxed'), 'hello world', 'obligatory hello world');
+is(headers('has-headers.winxed')->{'x-foo'}, 'bar', 'setting a header');
+is(content('has-headers.winxed'), "Some content\n", 'but also some content');
 is(status('statusCode.winxed'), 202, 'custom status code');
 is(status('otherStatus.wxd'), 202, 'another way to report a custom error code');
 # errors

@@ -13,7 +13,6 @@ function main[main](var request, string compiler, string scriptName) {
     }
     print("\nPOST data\n=========\n");
     say(getstdin().readall());
-
 }
 
 

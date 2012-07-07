@@ -1,5 +1,4 @@
 namespace apache {
-    
     class output {
         var request;
         var buffer;
