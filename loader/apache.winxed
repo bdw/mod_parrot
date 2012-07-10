@@ -50,6 +50,9 @@ namespace apache {
             writer(getinterp(), key, value, self.request);
         }
 
+        function close() {
+            // this is meaningless right now
+        }
     }   
     
     class input {
