@@ -48,7 +48,7 @@ namespace psgi {
     function run(string language, string fileName, var output, var env) {
         try {
             var byteCode = common.getBytecode(language, fileName);
-            var retunValue = byteCode.main_sub().invoke(env); 
+            var returnValue = byteCode.main_sub().invoke(env); 
             var response = new responder(output);
             if(does(returnValue, 'array') && elements(returnValue) == 3) {
                 response.writeHeader(returnValue[0], returnValue[1]);

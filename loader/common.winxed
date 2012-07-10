@@ -62,4 +62,10 @@ namespace common {
 		}	
     }
     
+    
+    function run(var bytecode, var input, var output) {
+        var interp = getinterp().clone();
+        // ok, now, how to run this bytecode
+        //
+    }
 }
