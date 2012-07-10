@@ -86,6 +86,7 @@ namespace apache {
         function readline() {
             // until we have a buffering system, do not implement this.
             // it isn't all that sensible, after all
+            throw new apache.error(500, 'apache.input.readline() NYI');
         }
 
         function readall() {

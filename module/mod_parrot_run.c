@@ -20,6 +20,7 @@ Parrot_PMC mod_parrot_interpreter(mod_parrot_conf * conf) {
 }
 
 extern module mod_parrot;
+
 /* this madness will be simplified in due time */ 
 static Parrot_PMC load_bytecode(Parrot_PMC interp, request_rec *req, 
                                 const char * filename) {
@@ -41,7 +42,8 @@ int mod_parrot_run(Parrot_PMC interp, request_rec *req, const char * compilerNam
     mod_parrot_conf * conf = 
         ap_get_module_config(req->server->module_config, &mod_parrot);
     const char *preload[] = {
-        "apache.pbc"
+        "apache.pbc",
+        "common.pbc",
     };
     int i;
 

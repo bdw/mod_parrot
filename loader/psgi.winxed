@@ -1,0 +1,87 @@
+inline does(var obj, string role) return int {
+    int rv;
+    ${ does rv, obj, role };
+    return rv;
+}
+
+namespace psgi {
+    function main[main](var request, string language, string fileName) {
+        run(language, fileName, new apache.output(request), setup(request));
+    }
+
+    function run(string language, string fileName, var output, var env) {
+        try {
+            var byteCode = common.getBytecode(language, fileName);
+            var mainSub = byteCode.main_sub();
+            var returnValue = mainSub(env); 
+            
+            var responder = function(int status,  var headers, var body [optional]) {
+                writeHeader(output, status, headers);
+                if(body) {
+                    writeBody(body);
+                } else {
+                    return output; // this is an object
+                }
+            };
+            if(does(returnValue, 'array') && elements(returnValue) == 3) {
+                writeHeader(output, returnValue[0], returnValue[1]);
+                writeBody(returnValue[2]);
+            } else if(does(returnValue, 'invokable')) {
+                
+            } else {
+                throw new apache.error(500, 'Nonsense return value from PSGI application')
+            }
+        } catch(error) {
+            if(error instanceof apache.error) {
+                error.report();
+            } else {
+                throw error;
+            }
+        }
+    }
+
+    
+    function writeHeaders(var output, int status, var headers) {
+        output.status(status); 
+        for(string k in headers) {
+            // i should check for the presence for required
+            // headers, but being myself, i wont
+            output.header(k, header[k]);
+        }
+    }
+
+    function writeBody(var output, var body) {
+        /* psgi is somewhat..  liberal */
+        if(does(body, 'Handle')) { 
+            output.write(body.readall()); /* Not every handle may implement it, though */
+        } else if(does(body, 'array')) {
+            for(string line in body) {
+                output.write(line);
+            }
+        } else {
+            output.write(string(body));
+        }
+    }
+
+    function setup(var request) {
+        var env = {
+            'psgi.multithread' : true,
+            'psgi.multiprocess' : true,
+            'psgi.nonblocking' : false,
+            'psgi.streaming' : true,
+            'psgi.run_once' : false,
+            'psgi.version' : [1,1],
+            'psgi.input' : new apache.input(request),
+            'psgi.errors' : getinterp().stderr_handle()
+        }; 
+        var headers = env['psgi.input'].headers();
+        for(var k in headers) {
+            env[common.cgiify(k)] = headers[k];
+        }
+        var params = env['psgi.input'].request();
+        for(var k in params) {
+            env[k] = headers[k];
+        }
+        return env;
+    }
+}
