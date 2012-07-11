@@ -9,6 +9,7 @@ clean:
 debug: all
 	@perl -Ipudding pudding/debug.pl
 
-test: all
+test: all # todo, combine them
 	@perl -Ipudding pudding/echo.pl
 	@perl -Ipudding pudding/cgi.pl
+	@perl -Ipudding pudding/psgi.pl
