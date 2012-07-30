@@ -37,8 +37,8 @@ WINXED
 my $streaming = <<WINXED;
 function delayed(var responder) {
     var writer = responder(203, {'x-hello':'world'});
-    sleep(1);
-    say(typeof(writer));
+/*    sleep(1); */
+    writer.write("after a while");
 }
 
 function main[main](var env) {
@@ -49,7 +49,8 @@ WINXED
 $server->serve("hello.wxd", $helloworld, 0755);
 $server->serve("delay.wxd", $delayed, 0755);
 $server->serve('streaming.wxd', $streaming, 0755);
-$server->debug();
+
+$server->start();
 Client::setup($server);
 is(content("hello.wxd"), "this is a sample psgi app");
 is(status("hello.wxd"), 203);
@@ -57,9 +58,8 @@ is(headers("hello.wxd")->{'x-hello'}, 'world');
 is(content('delay.wxd'), "a delayed response");
 is(headers('delay.wxd')->{'x-hello'}, 'world');
 is(status('delay.wxd'), 203);
-
 my $now = time;
-is(content('streaming.wxd'), 'some message');
+is(content('streaming.wxd'), 'after a while');
 my $then = time;
 ok($then - $now > 0.5);
 

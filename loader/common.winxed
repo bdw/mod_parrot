@@ -61,11 +61,14 @@ namespace common {
             throw new apache.error(403, "Cannot execute " + fileName);
 		}	
     }
-    
-    
-    function run(var bytecode, var input, var output) {
-        var interp = getinterp().clone();
-        // ok, now, how to run this bytecode
-        //
+
+    function run(var interp, var bytecode, var arguments) {
+        var evaluate = dlfunc(null, "mod_parrot_eval", "vPPP"); 
+        try { 
+            evaluate(interp, bytecode, arguments);
+        } catch(error) {
+            throw new apache.error(500, error.message);
+        }
     }
+    
 }
