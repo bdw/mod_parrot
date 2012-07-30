@@ -2,7 +2,7 @@
 use Server;
 use Client;
 use config;
-use Test::More;
+use Test::More tests => 8;
 use Time::HiRes qw(time);
 use strict;
 
@@ -38,7 +38,7 @@ my $streaming = <<WINXED;
 function delayed(var responder) {
     var writer = responder(203, {'x-hello':'world'});
     sleep(1);
-    say(typeof(writer));
+   	writer.write('some message'); 
 }
 
 function main[main](var env) {
@@ -49,7 +49,7 @@ WINXED
 $server->serve("hello.wxd", $helloworld, 0755);
 $server->serve("delay.wxd", $delayed, 0755);
 $server->serve('streaming.wxd', $streaming, 0755);
-$server->debug();
+$server->start();
 Client::setup($server);
 is(content("hello.wxd"), "this is a sample psgi app");
 is(status("hello.wxd"), 203);
@@ -63,5 +63,3 @@ is(content('streaming.wxd'), 'some message');
 my $then = time;
 ok($then - $now > 0.5);
 
-print $server->errors;
-done_testing;
