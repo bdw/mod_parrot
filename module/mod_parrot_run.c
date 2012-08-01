@@ -1,6 +1,25 @@
 #include "mod_parrot.h"
 
-
+/** 
+ * How this works:
+ * - we get an interpreter from mod_parrot_interpreter, which is brand new
+ * - we set it up in mod_parrot_run
+ * - and then we immediately run the script
+ * - if there is an error it goes to mod_parrot_report_error
+ * - and otherwise mod_parrot_handler simply clears our interpreter
+ *
+ * How this is going to work
+ * - upon startup we create a pool of interpreters, all children of one
+ * - we get an interpreter to serve a request via mod_parrot_get_interpreter(request_rec)
+ * - this tries to get one from mod_parrot_interpreter_pool_get()
+ * - if thats not possible it creates a new one from the root interpreter
+ * - this new interpreter is set up via mod_parrot_interpreter_setup()
+ * - this interpreter is passed to mod_parrot_start_loader
+ * - the loader creates a child interpreter and starts the scripts
+ * - afterwards, the child interpreter is destroyed
+ * - if an exception is thrown, it is freezed and thawed to the loader 
+ * - which passes it to a (default or specified error handler)
+ **/
 Parrot_PMC mod_parrot_interpreter(mod_parrot_conf * conf) {
 	Parrot_PMC interp, configHash;
     Parrot_PMC pir, pasm;
