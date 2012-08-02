@@ -28,4 +28,5 @@ like(headers('foobar.winxed')->{'x-echo-user-agent'}, qr/HTTP-Tiny/, 'and it sho
 is(status('foobar.html'), 200, 'regular files should be served');
 is(content('foobar.html'), $doc, 'just as they are');
 is(status('quixquam.html'), 404, 'and it should throw 404s');
-
+$server->stop();
+print $server->errors;
