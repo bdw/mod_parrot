@@ -2,20 +2,20 @@
 
 module mod_parrot;
 
-
-static int mod_parrot_handler(request_rec *req) {
-    mod_parrot_conf * conf = ap_get_module_config(req->server->module_config, &mod_parrot);
-    char * fullName = apr_pstrdup(req->pool, req->filename);
-    char * baseName = basename(fullName);
-    const char * compiler = NULL;
-    int code, idx = ap_rind(baseName, '.');
-    if(idx > 0) {
-        compiler = apr_table_get(conf->languages, baseName + idx);
-    } 
-    if(compiler) {
-        Parrot_PMC interp_pmc = mod_parrot_interpreter(conf);
-        code = mod_parrot_run(interp_pmc, req, compiler); // result code
-        Parrot_api_destroy_interpreter(interp); 
+/**
+ * Lets try to make some sense of this.
+ * First, find if I can handle it via mod_parrot_router.
+ * If so, aquire an interpreter (pertaining to the server).
+ * Run the script
+ * Release the interpreter
+ * Return a result
+ **/
+static apr_status_t mod_parrot_handler(request_rec *req) {
+    mod_parrot_route * route = mod_parrot_router(req);
+    if(route) {
+        Parrot_PMC interp_pmc = mod_parrot_aqcuire_interpreter(req->server_rec);
+        apr_status_t code = mod_parrot_run(interp_pmc, req, route); // result code
+        mod_parrot_release_interpreter(req->server_rec);
         return code;
     } 
     return DECLINED;
@@ -32,12 +32,13 @@ static void * mod_parrot_create_config(apr_pool_t * pool, server_rec * server) {
     return cfg;
 }
 
+/* i really really want to push an array of paths here, but
+ * unfortunately, that doesn't seem to work. I'll have to
+ * investigate just why */
 static const char * mod_parrot_set_loader_path(cmd_parms *cmd, void * dummy, const char * arg) {
     mod_parrot_conf * conf;
     conf = ap_get_module_config(cmd->server->module_config, &mod_parrot);
-    if(conf) { // i really really want to push an array of paths here, but
-               // unfortunately, that doesn't seem to work. I'll have to
-               // investigate just why
+    if(conf) { 
         conf->loaderPath = arg;
     } /* we should check if the loaderpath is really a directory here */
     return NULL;
@@ -57,6 +58,8 @@ static const char * mod_parrot_add_language(cmd_parms *cmd, void * dummy, const 
     conf = ap_get_module_config(cmd->server->module_config, &mod_parrot);
     if(conf) {
         apr_table_set(conf->languages, suffix, compiler);
+    } else {
+        return "Something is wrong in initialization";
     }
     return NULL;
 }
@@ -65,6 +68,7 @@ static void mod_parrot_register_hooks(apr_pool_t *p) {
 	ap_hook_handler(mod_parrot_handler, NULL, NULL, APR_HOOK_MIDDLE);
 }
 
+/* Todo: add ParrotApplication and ParrotError directives */
 static command_rec mod_parrot_directives[] = {
     AP_INIT_TAKE1("ParrotLoaderPath", mod_parrot_set_loader_path, NULL, RSRC_CONF, "Set the path for loader bytecodes"),
     AP_INIT_TAKE1("ParrotLoader", mod_parrot_set_loader, NULL, RSRC_CONF, "Set the loader bytecode for parrot (including extension)"),

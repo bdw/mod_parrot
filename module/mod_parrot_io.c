@@ -71,6 +71,7 @@ Parrot_PMC mod_parrot_headers_in(Parrot_PMC interp, request_rec * req) {
 
 /**
  * I laugh in the face of inefficiency 
+ * (although the efficient version would have been fun, as well)
  **/
 void mod_parrot_header_out(Parrot_PMC interp_pmc, Parrot_PMC key_pmc, 
                            Parrot_PMC val_pmc, request_rec *req) {
@@ -80,8 +81,6 @@ void mod_parrot_header_out(Parrot_PMC interp_pmc, Parrot_PMC key_pmc,
     mod_parrot_free_cstring(interp_pmc, key);
     mod_parrot_free_cstring(interp_pmc, val);
 }
-
-
 
 
 void mod_parrot_set_status(request_rec * req, int code) {
@@ -133,6 +132,8 @@ int mod_parrot_read(void * b, size_t s, request_rec * r) {
  * Sometimes these things are so easy.  (This routine used to print the
  * error messages to the as well, but apache overrides that because I
  * return an error code. Which is just as well for security, really).
+ * 
+ * Note, I want to replace this with a function that might run a script.
  *
  * @param Parrot_PMC interp The interpreter on which the error occured
  * @param request_rec * req The request on which the error occured. 
@@ -150,7 +151,10 @@ int mod_parrot_report_error(Parrot_PMC interp, request_rec *req) {
       Parrot_api_string_export_ascii(interp, backtrace, &bcktrc);
       fputs(rrmsg, stderr);
       fputs(bcktrc, stderr);
-  } 
+  }
+  /**
+   * This right here, is pretty much wrong 
+   **/
   return HTTP_INTERNAL_SERVER_ERROR;
 
 }

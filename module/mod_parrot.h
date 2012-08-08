@@ -19,12 +19,25 @@ typedef struct {
   apr_table_t * languages;
 } mod_parrot_conf;
 
-int mod_parrot_report_error(Parrot_PMC interp, request_rec *req);
+typedef struct { 
+    const char * language;
+    const char * script;
+    const char * class;
+    const char * routine;
+} mod_parrot_route;
+
+mod_parrot_route * mod_parrot_router(request_rec * req);
+
+
+
 int mod_parrot_write(void * buf, size_t size, request_rec *req);
 int mod_parrot_read(void * buf, size_t size, request_rec * req);
 
-Parrot_PMC mod_parrot_interpreter(mod_parrot_conf * conf);
-int mod_parrot_run(Parrot_PMC interp, request_rec *req, const char * compiler);
+Parrot_PMC mod_parrot_acquire_interpreter(server_rec * srv);
+void mod_parrot_release_interpreter(server_rec * srv, Parrot_PMC interp_pmc);
+apr_status_t mod_parrot_run(Parrot_PMC interp_pmc, request_rec *req, mod_parrot_route * route);
+apr_status_t mod_parrot_report_error(Parrot_PMC interp, request_rec *req);
+
 void mod_parrot_setup_args(Parrot_PMC interp, request_rec *req, Parrot_PMC *args);
 
 Parrot_PMC mod_parrot_hash_new(Parrot_PMC interp);

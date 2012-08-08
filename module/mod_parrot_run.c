@@ -1,5 +1,7 @@
 #include "mod_parrot.h"
 
+
+
 /** 
  * How this works:
  * - we get an interpreter from mod_parrot_interpreter, which is brand new
@@ -20,25 +22,33 @@
  * - if an exception is thrown, it is freezed and thawed to the loader 
  * - which passes it to a (default or specified error handler)
  **/
-Parrot_PMC mod_parrot_interpreter(mod_parrot_conf * conf) {
-	Parrot_PMC interp, configHash;
-    Parrot_PMC pir, pasm;
-    Parrot_api_make_interpreter(NULL, 0, NULL, &interp);
-    /* this is to help parrot set up the right paths by itself,
-     * and yes, i do agree this is a bit of unneccesesary magic.
-     * Parrots, it appears, are magical birds after all. */
-	configHash = mod_parrot_hash_new(interp);
-	mod_parrot_hash_put(interp, configHash, "build_dir", BUILDDIR);
-	mod_parrot_hash_put(interp, configHash, "versiondir", VERSIONDIR);
-	mod_parrot_hash_put(interp, configHash, "libdir", LIBDIR);
-	Parrot_api_set_configuration_hash(interp, configHash);
-    /* no pir without these calls ;-) */
-	imcc_get_pir_compreg_api(interp, 1, &pir);
-	imcc_get_pasm_compreg_api(interp, 1, &pasm);
-    return interp;
-}
 
 extern module mod_parrot;
+
+/**
+ * Determine the script to run
+ *
+ * Note, I want to make this different, more flexible, maybe even run a
+ * script. For now, just copy the old logic here. 
+ **/
+mod_parrot_route * mod_parrot_router(request_rec * req) {
+    mod_parrot_conf * conf = ap_get_module_config(req->server->module_config, &mod_parrot);
+    char * fullName = apr_pstrdup(req->pool, req->filename);
+    char * baseName = basename(fullName);
+    char * compiler = NULL;
+    int code, idx = ap_rind(baseName, '.'); // find the file suffix 
+    if(idx > 0) {
+        compiler = apr_table_get(conf->languages, baseName + idx);
+    } 
+    if(compiler) {
+        mod_parrot_route * route = apr_pcalloc(req->pool, sizeof(mod_parrot_route));
+        route->compiler = compiler;
+        route->script = fullName;
+        return route;
+    } else {
+        return NULL;
+    }
+}
 
 /* this madness will be simplified in due time */ 
 static Parrot_PMC load_bytecode(Parrot_PMC interp, request_rec *req, 
@@ -54,7 +64,12 @@ static Parrot_PMC load_bytecode(Parrot_PMC interp, request_rec *req,
     return bytecodePMC;
 }
 
-int mod_parrot_run(Parrot_PMC interp, request_rec *req, const char * compilerName) {
+
+Parrot_Int mod_parrot_preload(Parrot_PMC interp_pmc, mod_parrot_conf * conf) {
+    
+}
+
+apr_status_t mod_parrot_run(Parrot_PMC interp, request_rec *req, const char * compilerName) {
     Parrot_PMC library, loader, mainRoutine;
     Parrot_PMC request, contextObject;
     Parrot_String compiler, scriptName;
