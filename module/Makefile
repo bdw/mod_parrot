@@ -1,6 +1,8 @@
 include ../config.mk
 
-SOURCE=mod_parrot.c mod_parrot_io.c mod_parrot_run.c mod_parrot_util.c
+SOURCE=mod_parrot.c mod_parrot_io.c \
+	mod_parrot_route.c mod_parrot_run.c \
+	mod_parrot_util.c mod_parrot_interpreter.c 
 MODULE=mod_parrot.la
 OUTPUT=../build/mod_parrot.so
 

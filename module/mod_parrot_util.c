@@ -7,15 +7,6 @@ int mod_parrot_mpm_is_threaded() {
     return is_threaded;
 }
 
-Parrot_PMC mod_parrot_hash_new(Parrot_PMC interp_pmc) {
-    Parrot_Interp interp = Parrot_interp_get_from_pmc(interp_pmc);
-    Parrot_PMC hash_pmc = Parrot_pmc_new(interp, enum_class_Hash);
-    Hash * hash = VTABLE_get_pointer(interp, hash_pmc);
-    /* set the correct key type */
-    hash->key_type = Hash_key_type_STRING;
-    hash->entry_type = enum_type_STRING;
-    return hash_pmc;
-} 
 
 void mod_parrot_eval(Parrot_PMC interp_pmc, Parrot_PMC bytecode_pmc, 
                      Parrot_PMC argument_pmc) {
@@ -34,6 +25,28 @@ void mod_parrot_eval(Parrot_PMC interp_pmc, Parrot_PMC bytecode_pmc,
         Parrot_ex_throw_from_c(interp, exception_pmc);
     }
 }
+
+Parrot_PMC mod_parrot_array_new(Parrot_PMC interp_pmc) {
+    Parrot_Interp interp = Parrot_interp_get_from_pmc(interp_pmc);
+    Parrot_PMC array_pmc = Parrot_pmc_new(interp, enum_class_ResizablePMCArray);
+    return array_pmc;
+}
+
+void mod_parrot_array_push(Parrot_PMC interp_pmc, Parrot_PMC array_pmc,
+                           Parrot_PMC data_pmc) {
+    Parrot_Interp interp = Parrot_interp_get_from_pmc(interp_pmc);
+    VTABLE_push_pmc(interp, array_pmc, data_pmc);
+}
+
+Parrot_PMC mod_parrot_hash_new(Parrot_PMC interp_pmc) {
+    Parrot_Interp interp = Parrot_interp_get_from_pmc(interp_pmc);
+    Parrot_PMC hash_pmc = Parrot_pmc_new(interp, enum_class_Hash);
+    Hash * hash = VTABLE_get_pointer(interp, hash_pmc);
+    /* set the correct key type */
+    hash->key_type = Hash_key_type_STRING;
+    hash->entry_type = enum_type_STRING;
+    return hash_pmc;
+} 
                                    
 /* this is not much less verbose than the original version but whatever */
 void mod_parrot_hash_put(Parrot_PMC interp_pmc, Parrot_PMC hash_pmc, 

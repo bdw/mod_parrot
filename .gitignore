@@ -9,3 +9,4 @@ build
 *.pbc
 config.*
 *.pir
+*#*

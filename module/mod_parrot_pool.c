@@ -36,7 +36,24 @@ Parrot_PMC new_interpreter() {
 
 Parrot_PMC child_interpreter(Parrot_PMC parent_interp_pmc) {
     
+
 }
+
+
+    if(mod_parrot_mpm_is_threaded()) {
+        Parrot_PMC child;
+        apr_thread_mutex_lock(pool->mutex);
+        if(apr_is_empty_array(pool->queue)) {
+            apr_thread_mutex_unlock(pool->mutex);
+            child = interp_child(pool->root); 
+        } else {
+            child = *(apr_array_pop(pool->queue));
+            apr_thread_mutex_unlock(pool->mutex);
+        }
+        return child;
+    } else {
+        return pool->root;
+    }
 
 /**
  * Strategy:

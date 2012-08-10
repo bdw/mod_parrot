@@ -11,11 +11,11 @@ module mod_parrot;
  * Return a result
  **/
 static apr_status_t mod_parrot_handler(request_rec *req) {
-    mod_parrot_route * route = mod_parrot_router(req);
+    mod_parrot_route * route = mod_parrot_find_route(req);
     if(route) {
-        Parrot_PMC interp_pmc = mod_parrot_aqcuire_interpreter(req->server_rec);
-        apr_status_t code = mod_parrot_run(interp_pmc, req, route); // result code
-        mod_parrot_release_interpreter(req->server_rec);
+        Parrot_PMC interp_pmc = mod_parrot_acquire_interpreter(req->server);
+        apr_status_t code = mod_parrot_run(interp_pmc, req, route); 
+        mod_parrot_release_interpreter(req->server, interp_pmc);
         return code;
     } 
     return DECLINED;
@@ -44,6 +44,7 @@ static const char * mod_parrot_set_loader_path(cmd_parms *cmd, void * dummy, con
     return NULL;
 }
 
+/* todo: use nice syntax for loaders */
 static const char * mod_parrot_set_loader(cmd_parms *cmd, void * dummy, const char * arg) {
     mod_parrot_conf * conf;
     conf = ap_get_module_config(cmd->server->module_config, &mod_parrot);
