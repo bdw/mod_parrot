@@ -1,24 +1,30 @@
 $include_const "cclass.pasm";
 $include_const "datatypes.pasm";
 
+// Forward-declare classes
+class OS;
+class File;
+class FileHandle;
+class apache.error;
+
 namespace common {
 
-	inline find_cclass(int cclass, string s, int startIdx, int length) 
-		return int {
-		int idx;
-		${ find_cclass idx, cclass, s, startIdx, length };
-		return idx;
-	}
+    inline find_cclass(int cclass, string s, int startIdx, int length)
+        return int {
+        int idx;
+        ${ find_cclass idx, cclass, s, startIdx, length };
+        return idx;
+    }
 
-	inline find_not_cclass(int cclass, string s, int startIdx, int length) 
-		return int {
-		int idx;
-		${ find_not_cclass idx, cclass, s, startIdx, length };
-		return idx;
-	}
-	const string MODULE_GLOBALS = "mod_parrot.globals";
+    inline find_not_cclass(int cclass, string s, int startIdx, int length)
+        return int {
+        int idx;
+        ${ find_not_cclass idx, cclass, s, startIdx, length };
+        return idx;
+    }
+    const string MODULE_GLOBALS = "mod_parrot.globals";
 
-    inline set_global(string name, var value) 
+    inline set_global(string name, var value)
         return var {
         ${ set_global name, value };
         return value;
@@ -30,22 +36,22 @@ namespace common {
         return value;
     }
 
-    /* i don't know which of those tags does the trick 
-	 * but one does */
-	function init[anon, load, init]() {
-		loadlib('os');
-		loadlib('file');
+    /* i don't know which of those tags does the trick
+     * but one does */
+    function init[anon, load, init]() {
+        loadlib('os');
+        loadlib('file');
         load_bytecode('osutils.pbc');
-		set_global(MODULE_GLOBALS, {});
-	}
+        set_global(MODULE_GLOBALS, {});
+    }
 
     function cgiify(var value) {
         for(int i = 0; i < length(value); i++) {
-            i = find_not_cclass(CCLASS_ALPHANUMERIC, value, 
+            i = find_not_cclass(CCLASS_ALPHANUMERIC, value,
                                 i, length(value) - i);
             if(i < length(value))
                 value[i] = "_";
-        }   
+        }
         value = upcase(value);
         if(substr(value, 0, 7) == "CONTENT")
             return value;
@@ -57,30 +63,30 @@ namespace common {
         int j = find_not_cclass(CCLASS_NUMERIC, s, i, length(s)-i);
         return int(substr(s, i, j - i));
     }
-    
+
     function getBytecode(string language, string fileName) {
         var os = new OS;
-		var file = new File;
-		load_language(language);
-		var compiler = compreg(language);
-		if(compiler == null) {
+        var file = new File;
+        load_language(language);
+        var compiler = compreg(language);
+        if(compiler == null) {
             throw new apache.error(500, 'Cannot load compiler for ' + language);
-		}
-		if(!file.exists(fileName)) {
+        }
+        if(!file.exists(fileName)) {
             throw new apache.error(404, fileName + " not found");
-        } 
+        }
         if(os.can_read(fileName) && os.can_execute(fileName)) {
-			var handle = new FileHandle;
-			handle.open(fileName, "r");
-			return compiler.compile(handle.readall());
-		} else {
+            var handle = new FileHandle;
+            handle.open(fileName, "r");
+            return compiler.compile(handle.readall());
+        } else {
             throw new apache.error(403, "Cannot execute " + fileName);
-		}	
+        }
     }
-    
+
     function wrap(var route) {
         say(typeof(route));
         return {};
-    }   
+    }
 
 }
