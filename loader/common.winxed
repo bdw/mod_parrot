@@ -1,27 +1,42 @@
 $include_const "cclass.pasm";
 $include_const "datatypes.pasm";
 
-inline find_cclass(int cclass, string s, int startIdx, int length) return int
-{
-    int idx;
-    ${ find_cclass idx, cclass, s, startIdx, length };
-    return idx;
-}
-
-inline find_not_cclass(int cclass, string s, int startIdx, int length) return int {
-    int idx;
-    ${ find_not_cclass idx, cclass, s, startIdx, length };
-    return idx;
-}
-
-
 namespace common {
+
+	inline find_cclass(int cclass, string s, int startIdx, int length) 
+		return int {
+		int idx;
+		${ find_cclass idx, cclass, s, startIdx, length };
+		return idx;
+	}
+
+	inline find_not_cclass(int cclass, string s, int startIdx, int length) 
+		return int {
+		int idx;
+		${ find_not_cclass idx, cclass, s, startIdx, length };
+		return idx;
+	}
+	const string MODULE_GLOBALS = "mod_parrot.globals";
+
+    inline set_global(string name, var value) 
+        return var {
+        ${ set_global name, value };
+        return value;
+    }
+
+    inline get_global(string name) return var {
+        var value;
+        ${ get_global value, name };
+        return value;
+    }
+
     /* i don't know which of those tags does the trick 
 	 * but one does */
 	function init[anon, load, init]() {
 		loadlib('os');
 		loadlib('file');
         load_bytecode('osutils.pbc');
+		set_global(MODULE_GLOBALS, {});
 	}
 
     function cgiify(var value) {
