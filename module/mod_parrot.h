@@ -14,20 +14,23 @@
 
 #define DEFAULT_LOADER "echo.pbc"
 
-/* A smallish configuration, this will be extended */
+/* Server configuration */
 typedef struct {
   const char * loaderPath;
   const char * loader;
   apr_table_t * languages;
 } mod_parrot_conf;
 
-/* Specify what script was requested */
+/* I still do want a directory configuration */
+
+/* Specify what script was requested. */
 typedef struct { 
     char * language;
     char * script;
     char * className; /* for those who compile with c++ */
     char * routine;
 } mod_parrot_route;
+
 
 /* determine if we run in a threaded mpm */
 int mod_parrot_mpm_is_threaded();
@@ -44,6 +47,8 @@ Parrot_PMC mod_parrot_acquire_interpreter(server_rec * srv);
 void mod_parrot_release_interpreter(server_rec * srv, Parrot_PMC interp_pmc);
 
 /* Run and report */
+Parrot_Int mod_parrot_preload(Parrot_PMC interp_pmc, apr_pool_t * pool,
+                              mod_parrot_conf * conf);
 apr_status_t mod_parrot_run(Parrot_PMC interp_pmc, request_rec *req, 
                             mod_parrot_route * route);
 apr_status_t mod_parrot_report(Parrot_PMC interp_pmc, request_rec *req);
@@ -57,6 +62,7 @@ void mod_parrot_hash_put(Parrot_PMC interp_pmc, Parrot_PMC hash_pmc,
                          char * key, char * value);
 char * mod_parrot_export_cstring(Parrot_PMC interp_pmc, Parrot_PMC export_pmc);
 void mod_parrot_free_cstring(Parrot_PMC interp_pmc, char * cstring);
+
 /* Cool in principle, unused due to poor mens polymorphism */
 typedef void (*mod_parrot_hash_callback)(void *, char *, char *);
 void mod_parrot_hash_iterate(Parrot_PMC interp, Parrot_PMC hash, 

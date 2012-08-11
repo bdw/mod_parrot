@@ -38,7 +38,7 @@ my $streaming = <<WINXED;
 function delayed(var responder) {
     var writer = responder(203, {'x-hello':'world'});
     sleep(1);
-   	writer.write('some message'); 
+   	writer.write('after a while'); 
 }
 
 function main[main](var env) {

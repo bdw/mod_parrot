@@ -8,7 +8,7 @@
  * - if there is an error it goes to mod_parrot_report_error
  * - and otherwise mod_parrot_handler simply clears our interpreter
  *
- * How this is going to work
+ * How this is going to work 
  * - upon startup we create a pool of interpreters, all children of one
  * - we get an interpreter to serve a request via mod_parrot_get_interpreter(request_rec)
  * - this tries to get one from mod_parrot_interpreter_pool_get()
@@ -29,6 +29,9 @@ extern module mod_parrot;
  * Internally:
  * get the path to a loader script via loader_path()
  * obtain a loader / library via loader_get()
+ *
+ * wrap the route into a parrot structure with wrap_route()
+ * wrap the request into a parrot pointer with wrap_request()
  *
  * Publicly:
  * preload libraries with mod_parrot_preload()
@@ -52,7 +55,9 @@ static Parrot_PMC loader_get(Parrot_PMC interp_pmc, char * path) {
     return NULL; /* crash and crash hard! */
 }
 
+
 /* yes we should have a more consistent calling interface */
+/* and for those who wonder, this is public to allow for calling it earlier */
 Parrot_Int mod_parrot_preload(Parrot_PMC interp_pmc, apr_pool_t * pool, 
                               mod_parrot_conf * conf) {
     /* put the libraries in a separate function? */
@@ -72,24 +77,57 @@ Parrot_Int mod_parrot_preload(Parrot_PMC interp_pmc, apr_pool_t * pool,
     return 1;
 }
 
-apr_status_t mod_parrot_run(Parrot_PMC interp_pmc, request_rec *req, 
+/* evil, maniacal laughter */
+Parrot_PMC wrap_route(Parrot_PMC interp_pmc, mod_parrot_route * route) {
+    Parrot_PMC route_pmc;
+    int argc = sizeof(*route) / sizeof(char*);
+    const char ** argv = (const char**)(route); /* this line right here */
+    Parrot_api_pmc_wrap_string_array(interp_pmc, argc, argv, &route_pmc);
+    return route_pmc;
+}
+
+Parrot_PMC wrap_request(Parrot_PMC interp_pmc, request_rec *req) {
+    Parrot_PMC request_pmc;
+    Parrot_api_wrap_pointer(interp_pmc, req, sizeof(*req), &request_pmc);
+    return request_pmc;
+}
+
+/**
+ * Start handling a request with a given interpreter to a determined route 
+ *
+ * @param Parrot_PMC interp_pmc
+ * @param request_rec * request
+ * @param mod_parrot_route * route
+ * @return apr_status_t a status code (OK or a HTTP code)
+ **/
+apr_status_t mod_parrot_run(Parrot_PMC interp_pmc, request_rec *request, 
                             mod_parrot_route * route) {
     mod_parrot_conf * conf;
     Parrot_PMC loader_pmc, args_pmc;
     Parrot_PMC request_pmc, route_pmc;
     char * path;
     /* get the configuration */
-    conf = ap_get_module_config(req->server->module_config, &mod_parrot);    
+    conf = ap_get_module_config(request->server->module_config, &mod_parrot);    
     /* load libraries, preferably move this somewhere earlier */
-    if(!mod_parrot_preload(interp_pmc, req->pool, conf)) {
-        return mod_parrot_report(interp_pmc, req);
+    /* 
+     * for the record, that cannot be done yet because of:
+     *
+     * interpreters must be short-lived (long story :-))
+     * hence, i must create them on every request
+     * i need to allocate some memory to search for the libraries
+     * thus I need to use the request pool (as opposed to the process pool)
+     * because only the request pool is cleaned after every request
+     */
+    if(!mod_parrot_preload(interp_pmc, request->pool, conf)) {
+        return mod_parrot_report(interp_pmc, request);
     }
+
     /* get the actual loader script  */
-    path = loader_path(req->pool, conf, (char*)conf->loader);
+    path = loader_path(request->pool, conf, (char*)conf->loader);
     loader_pmc = loader_get(interp_pmc, path);
     /* wrap the structures */
-    Parrot_api_wrap_pointer(interp_pmc, req, sizeof(*req), &request_pmc);
-    Parrot_api_wrap_pointer(interp_pmc, route, sizeof(*route), &route_pmc);
+    request_pmc = wrap_request(interp_pmc, request);
+    route_pmc = wrap_route(interp_pmc, route);
     /* setup the arguments */
     args_pmc = mod_parrot_array_new(interp_pmc);
     mod_parrot_array_push(interp_pmc, args_pmc, request_pmc);
@@ -99,18 +137,19 @@ apr_status_t mod_parrot_run(Parrot_PMC interp_pmc, request_rec *req,
     if(Parrot_api_run_bytecode(interp_pmc, loader_pmc, args_pmc)) {
         return OK;
     } else {
-        return mod_parrot_report(interp_pmc, req);
+        return mod_parrot_report(interp_pmc, request);
     }
 }
 
 
 /**
- * Report an error (with backtrace) to the apache logs (via stderr).
- * Sometimes these things are so easy.  (This routine used to print the
- * error messages to the as well, but apache overrides that because I
- * return an error code. Which is just as well for security, really).
- * 
- * Note, I want to replace this with a function that might run a script.
+ * The calling signature on this thing is so incredibly wrong.
+ * This function SHOULD have been passed the route and the exception,
+ * and perhaps the request as well.
+ *
+ * Instead it gets the exception for itself, just dumping the backtrace
+ * (w/o proper information) in the server error log. I'd really like to fix
+ * this one day.
  *
  * @param Parrot_PMC interp The interpreter on which the error occured
  * @param request_rec * req The request on which the error occured. 

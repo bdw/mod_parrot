@@ -1,6 +1,6 @@
-function main[main](var request, string compiler, string scriptName) {
-    apache.setup(request);
-    say("Loading compiler " + compiler + " and script " + scriptName);
+function main[main](var args) {
+    apache.setup(args[0]);
+    say("Loading compiler ", args[1][0], " and script ", args[1][1]); 
     getstdout().status(203);
     var headers = getstdin().headers();
     for(string k in headers) {

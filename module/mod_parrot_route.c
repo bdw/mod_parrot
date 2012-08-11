@@ -1,6 +1,7 @@
 #include "mod_parrot.h"
 
 extern module mod_parrot;
+
 /**
  * Determine the script to run
  *

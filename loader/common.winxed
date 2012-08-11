@@ -1,4 +1,5 @@
 $include_const "cclass.pasm";
+$include_const "datatypes.pasm";
 
 inline find_cclass(int cclass, string s, int startIdx, int length) return int
 {
@@ -61,14 +62,10 @@ namespace common {
             throw new apache.error(403, "Cannot execute " + fileName);
 		}	
     }
-
-    function run(var interp, var bytecode, var arguments) {
-        var evaluate = dlfunc(null, "mod_parrot_eval", "vPPP"); 
-        try { 
-            evaluate(interp, bytecode, arguments);
-        } catch(error) {
-            throw new apache.error(500, error.message);
-        }
-    }
     
+    function wrap(var route) {
+        say(typeof(route));
+        return {};
+    }   
+
 }
