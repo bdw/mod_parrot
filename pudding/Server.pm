@@ -107,7 +107,8 @@ sub start {
     my $self = shift;
 	make_path($self->{DocumentRoot}) unless -d $self->{DocumentRoot};
 	$self->{File} = writeconf(%$self);
-	push @servers, $self->{Pid} = startprocess($self);	
+	$self->{Pid} = startprocess($self);	
+    push @servers, $self;
 }
 
 =head2 Serve a file (allowing it to be tested)
@@ -181,8 +182,8 @@ sub errors {
 
 END {
     for (@servers) {
-        kill "SIGQUIT", $_;
-#        print $_->errors if $ENV{VERBOSE};
+        kill "SIGQUIT", $_->{Pid};
+        print $_->errors if $ENV{VERBOSE};
     }
 }
 
