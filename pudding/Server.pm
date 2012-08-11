@@ -182,6 +182,7 @@ sub errors {
 END {
     for (@servers) {
         kill "SIGQUIT", $_;
+#        print $_->errors if $ENV{VERBOSE};
     }
 }
 

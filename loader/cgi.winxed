@@ -77,9 +77,9 @@ namespace cgi {
         }
     }
 
-    function main[main](var request, string language, string fileName) {
-        setup(request);
-        run(language, fileName);
+    function main[main](var args) {
+        setup(args[0]);
+        run(args[1][0], args[1][1]);
     }
 
 }

@@ -10,7 +10,6 @@ static char * ipaddr(apr_sockaddr_t *a) {
 }
 
 
-
 /**
  * Fetch the request parameters
  * @param Parrot_PMC i The interpreter
@@ -71,6 +70,7 @@ Parrot_PMC mod_parrot_headers_in(Parrot_PMC interp, request_rec * req) {
 
 /**
  * I laugh in the face of inefficiency 
+ * (although the efficient version would have been fun, as well)
  **/
 void mod_parrot_header_out(Parrot_PMC interp_pmc, Parrot_PMC key_pmc, 
                            Parrot_PMC val_pmc, request_rec *req) {
@@ -80,8 +80,6 @@ void mod_parrot_header_out(Parrot_PMC interp_pmc, Parrot_PMC key_pmc,
     mod_parrot_free_cstring(interp_pmc, key);
     mod_parrot_free_cstring(interp_pmc, val);
 }
-
-
 
 
 void mod_parrot_set_status(request_rec * req, int code) {
@@ -126,31 +124,4 @@ int mod_parrot_read(void * b, size_t s, request_rec * r) {
         return r->read_length - count;
     } 
     return -1;
-}
-
-/**
- * Report an error (with backtrace) to the apache logs (via stderr).
- * Sometimes these things are so easy.  (This routine used to print the
- * error messages to the as well, but apache overrides that because I
- * return an error code. Which is just as well for security, really).
- *
- * @param Parrot_PMC interp The interpreter on which the error occured
- * @param request_rec * req The request on which the error occured. 
- * @return int the http code of the error (HTTP_INTERNAL_SERVER_ERROR)
- **/
-int mod_parrot_report_error(Parrot_PMC interp, request_rec *req) {
-  Parrot_Int is_error, exit_code;
-  Parrot_PMC exception;
-  Parrot_String error_message, backtrace;
-  if (Parrot_api_get_result(interp, &is_error, &exception, &exit_code, &error_message) && is_error) {
-      /* do something useful on the basis of this information */
-      char *rrmsg,  *bcktrc;
-      Parrot_api_get_exception_backtrace(interp, exception, &backtrace);
-      Parrot_api_string_export_ascii(interp, error_message, &rrmsg);
-      Parrot_api_string_export_ascii(interp, backtrace, &bcktrc);
-      fputs(rrmsg, stderr);
-      fputs(bcktrc, stderr);
-  } 
-  return HTTP_INTERNAL_SERVER_ERROR;
-
 }

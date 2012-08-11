@@ -5,8 +5,8 @@ inline does(var obj, string role) return int {
 }
 
 namespace psgi {
-    function main[main](var request, string language, string fileName) {
-        run(language, fileName, new apache.output(request), setup(request));
+    function main[main](var args) {
+        run(args[1][0], args[1][1], new apache.output(args[0]), setup(args[0]));
     }
 
     class responder {
@@ -34,7 +34,8 @@ namespace psgi {
         function writeBody(var body) {
             /* psgi is somewhat..  liberal */
             if(does(body, 'Handle')) { 
-                self.output.write(body.readall()); /* Not every handle may implement it, though */
+                self.output.write(body.readall()); /* Not every handle may
+                                                      implement readall, though */
             } else if(does(body, 'array')) {
                 for(string line in body) {
                     self.output.write(line);
@@ -70,7 +71,7 @@ namespace psgi {
 
     function setup(var request) {
         var env = {
-            'psgi.multithread' : true,
+            'psgi.multithread' : true, /* none of these are true now */
             'psgi.multiprocess' : true,
             'psgi.nonblocking' : false,
             'psgi.streaming' : true,
