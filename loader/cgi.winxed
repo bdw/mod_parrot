@@ -1,3 +1,10 @@
+// Forward-declare classes
+class OS;
+class Env;
+class apache.output;
+class apache.input;
+class apache.error;
+
 namespace cgi {
     class output : apache.output {
         function puts(string msg) {
@@ -12,10 +19,10 @@ namespace cgi {
                     string payload = shift_string(lines);
                     int i = indexof(payload, ':');
                     if(indexof(payload, "HTTP") == 0) {
-                        string s = substr(payload, 8);  
+                        string s = substr(payload, 8);
                         self.status(common.cut_number(s));
                     } else if(i > 0) {
-                        // must be a header                    
+                        // must be a header
                         string key = substr(payload, 0, i);
                         string val = substr(payload, i + 1);
                         if(upcase(key) == "STATUS") /* cgi how you annoy me */
@@ -29,7 +36,7 @@ namespace cgi {
                         break;
                     }
                 }
-                if(elements(lines) > 0) 
+                if(elements(lines) > 0)
                     self.write(join("\n", lines));
             } else {
                 self.write(msg);
@@ -37,7 +44,7 @@ namespace cgi {
         }
     }
 
-    
+
     function run(string language, string fileName) {
         try {
             var os = new OS; /* OS is loaded in common and hence available */

@@ -1,3 +1,8 @@
+// Forward-declare classes
+class ByteBuffer;
+class StringBuilder;
+class Exception;
+
 namespace apache {
     class output {
         var request;
@@ -6,11 +11,11 @@ namespace apache {
         var headerWriter;
         var statusWriter;
         var bytesWritten; // content bytes only
-        
+
         function output(var request) {
             self.init(request);
         }
-        
+
         function init(var request) {
             // for now, keep the auto-opening
             self.contentWriter = dlfunc(null, "mod_parrot_write", "ipip");
@@ -38,7 +43,7 @@ namespace apache {
             int b = writer(self.buffer, elements(self.buffer), self.request);
             self.bytesWritten += b; // should check if this is larger than 0
             return b;
-        }   
+        }
 
         function status(int val) {
             var writer = self.statusWriter;
@@ -53,8 +58,8 @@ namespace apache {
         function close() {
             // this is meaningless right now
         }
-    }   
-    
+    }
+
     class input {
         var contentReader;
         var headerReader;
@@ -76,10 +81,10 @@ namespace apache {
             self.headerReader = dlfunc(null, "mod_parrot_headers_in", "PPp");
             self.requestReader = dlfunc(null, "mod_parrot_request_parameters", "PPp");
             self.buffer = new ByteBuffer;
-            self.readSize = 16; // this should be configurable 
+            self.readSize = 16; // this should be configurable
             self.open(request);
         }
-        
+
         function open(var request) {
             var open = dlfunc(null, "mod_parrot_open_input", "ip");
             self.remaining = open(request);
@@ -114,7 +119,7 @@ namespace apache {
                 return "";
             }
         }
-        
+
         function headers() {
             var reader = self.headerReader;
             return reader(getinterp(), self.request);
@@ -146,6 +151,6 @@ namespace apache {
 
     function setup[main](var request) {
         getinterp().stdin_handle(new input(request));
-        getinterp().stdout_handle(new output(request));            
+        getinterp().stdout_handle(new output(request));
     }
 }

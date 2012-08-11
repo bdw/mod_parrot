@@ -1,3 +1,8 @@
+// Forward-declare classes
+class apache.error;
+class apache.input;
+class apache.output;
+
 inline does(var obj, string role) return int {
     int rv;
     ${ does rv, obj, role };
@@ -14,7 +19,7 @@ namespace psgi {
         function responder(var output) {
             self.output = output;
         }
-        
+
         function invoke[vtable](int status, var headers, var body[optional]) {
             self.writeHeader(status, headers);
             if(body) {
@@ -33,7 +38,7 @@ namespace psgi {
 
         function writeBody(var body) {
             /* psgi is somewhat..  liberal */
-            if(does(body, 'Handle')) { 
+            if(does(body, 'Handle')) {
                 self.output.write(body.readall()); /* Not every handle may
                                                       implement readall, though */
             } else if(does(body, 'array')) {
@@ -79,7 +84,7 @@ namespace psgi {
             'psgi.version' : [1,1],
             'psgi.input' : new apache.input(request),
             'psgi.errors' : getinterp().stderr_handle()
-        }; 
+        };
         var headers = env['psgi.input'].headers();
         for(string k in headers) {
             env[common.cgiify(k)] = headers[k];
