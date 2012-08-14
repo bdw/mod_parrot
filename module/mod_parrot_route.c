@@ -2,15 +2,20 @@
 
 extern module mod_parrot;
 
-/**
- * Determine the script to run
- *
- * Note, I want to make this different, more flexible, maybe even run a
- * script. For now, just copy the old logic here. 
- **/
-mod_parrot_route * mod_parrot_find_route(request_rec * req) {
-    mod_parrot_conf * conf = 
-        ap_get_module_config(req->server->module_config, &mod_parrot);
+/* mime routing is really fallback routing as far as i'm concerned */
+mod_parrot_route * mime_route(request_rec * req, mod_parrot_conf * conf) {
+    if(req->content_type && 
+       !strcmp(req->content_type, MOD_PARROT_MIME_TYPE)) {
+        mod_parrot_route * route = 
+            apr_pcalloc(req->pool, sizeof(mod_parrot_route));
+        route->script = req->filename;
+        return route;
+    }
+    return NULL;
+}
+
+/* suffix routing is our own special routing logic */
+mod_parrot_route * suffix_route(request_rec * req, mod_parrot_conf * conf) {
     char * path = apr_pstrdup(req->pool, req->filename);
     char * base = basename(path); /* basename is not allways reentrant */
     const char * compiler = NULL;
@@ -28,3 +33,23 @@ mod_parrot_route * mod_parrot_find_route(request_rec * req) {
         return NULL;
     }
 }
+
+/**
+ * Find the current route by a couple of methods
+ * Currently, try suffix routing, and mime routing after that.
+ * I want to try application routing first, if supported by loader
+ **/
+mod_parrot_route * mod_parrot_find_route(request_rec * req) {
+    mod_parrot_conf * conf = NULL;
+    mod_parrot_route * route = NULL;
+    conf = ap_get_module_config(req->server->module_config, &mod_parrot);
+    if(conf) {
+        route = suffix_route(req, conf);
+        if(route) return route;
+    }
+    route = mime_route(req, conf);
+    return route;
+}
+
+
+

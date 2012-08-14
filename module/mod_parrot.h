@@ -32,6 +32,8 @@ typedef struct {
 } mod_parrot_route;
 
 
+#define MOD_PARROT_MIME_TYPE "application/x-httpd-parrot"
+
 /* determine if we run in a threaded mpm */
 int mod_parrot_mpm_is_threaded();
 

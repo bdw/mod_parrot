@@ -45,7 +45,8 @@ static const char * mod_parrot_set_loader_path(cmd_parms *cmd, void * dummy, con
 }
 
 /* todo: use nice syntax for loaders */
-static const char * mod_parrot_set_loader(cmd_parms *cmd, void * dummy, const char * arg) {
+static const char * mod_parrot_set_loader(cmd_parms *cmd, void * dummy, 
+                                          const char * arg) {
     mod_parrot_conf * conf;
     conf = ap_get_module_config(cmd->server->module_config, &mod_parrot);
     if(conf) {
@@ -54,7 +55,9 @@ static const char * mod_parrot_set_loader(cmd_parms *cmd, void * dummy, const ch
     return NULL;
 }
 
-static const char * mod_parrot_add_language(cmd_parms *cmd, void * dummy, const char * compiler, const char * suffix) {
+static const char * mod_parrot_add_language(cmd_parms *cmd, void * dummy, 
+                                            const char * compiler, 
+                                            const char * suffix) {
     mod_parrot_conf * conf;
     conf = ap_get_module_config(cmd->server->module_config, &mod_parrot);
     if(conf) {
@@ -74,6 +77,7 @@ static command_rec mod_parrot_directives[] = {
     AP_INIT_TAKE1("ParrotLoaderPath", mod_parrot_set_loader_path, NULL, RSRC_CONF, "Set the path for loader bytecodes"),
     AP_INIT_TAKE1("ParrotLoader", mod_parrot_set_loader, NULL, RSRC_CONF, "Set the loader bytecode for parrot (including extension)"),
     AP_INIT_ITERATE2("ParrotLanguage", mod_parrot_add_language, NULL, RSRC_CONF, "Register a language for parrot to use"),
+    
     { NULL },
 };
 
