@@ -13,3 +13,4 @@ test: all # todo, combine them
 	@perl -Ipudding pudding/echo.pl
 	@perl -Ipudding pudding/cgi.pl
 	@perl -Ipudding pudding/psgi.pl
+	@perl -Ipudding pudding/mime.pl

@@ -94,6 +94,10 @@ sub configure {
     $self->restart() if $self->{Pid};
 }
 
+sub addFile {
+    my ($self, $name, $content) = @_;
+    write_file($self->{ServerRoot} . '/' . $name, $content);
+}
 
 =head2 Start the web server.
 

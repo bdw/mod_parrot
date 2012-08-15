@@ -54,6 +54,7 @@ write_definitions('module/config.h', '#define %s "%s"', \%config);
 
 my %make = (
     LIBTOOL => qx/$apxs -q LIBTOOL/,
+    INSTALLDIR => $config{INSTALLDIR},
 	BUILDDIR => getcwd(),
     APXS => $apxs,
     HTTPD => $httpd,
