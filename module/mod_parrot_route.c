@@ -43,11 +43,10 @@ mod_parrot_route * mod_parrot_find_route(request_rec * req) {
     mod_parrot_conf * conf = NULL;
     mod_parrot_route * route = NULL;
     conf = ap_get_module_config(req->server->module_config, &mod_parrot);
-    if(conf) {
+    if(!route && conf) 
         route = suffix_route(req, conf);
-        if(route) return route;
-    }
-    route = mime_route(req, conf);
+    if(!route)
+        route = mime_route(req, conf);
     return route;
 }
 

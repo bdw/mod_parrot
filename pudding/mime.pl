@@ -13,6 +13,7 @@ $server->loadModule(
 $server->configure(
     ParrotLoader => 'echo.pbc',
     ParrotLoaderPath => $config::BUILDDIR . '/build',
+    TypesConfig =>  'mime.types', # apparantly different distros disagree about this
 );
 $mime = <<MIME;
 application/x-httpd-parrot wxd
@@ -28,6 +29,6 @@ Client::setup($server);
 like(content('foo.wxd'), qr/Loading compiler/);
 like(content('foo.wxd'), qr/foo\.wxd/);
 
-
-
+$server->stop();
+print $server->errors;
 done_testing();
