@@ -32,7 +32,7 @@ static void * mod_parrot_create_config(apr_pool_t * pool, server_rec * server) {
     return cfg;
 }
 
-/* i really really want to push an array of paths here, but
+/* i really really wan to push an array of paths here, but
  * unfortunately, that doesn't seem to work. I'll have to
  * investigate just why */
 static const char * mod_parrot_set_loader_path(cmd_parms *cmd, void * dummy, const char * arg) {
@@ -44,17 +44,26 @@ static const char * mod_parrot_set_loader_path(cmd_parms *cmd, void * dummy, con
     return NULL;
 }
 
-/* todo: use nice syntax for loaders */
-static const char * mod_parrot_set_loader(cmd_parms *cmd, void * dummy, const char * arg) {
-    mod_parrot_conf * conf;
-    conf = ap_get_module_config(cmd->server->module_config, &mod_parrot);
+static const char * mod_parrot_set_loader(cmd_parms *cmd, void * dummy, 
+                                          const char * arg) {
+    mod_parrot_conf * conf = ap_get_module_config(cmd->server->module_config, 
+                                                  &mod_parrot);
+    /* if thisisnot a server configuration directive this is wrong */
+    apr_pool_t pool = cmd->server->process->pool;
     if(conf) {
-        conf->loader = arg;
+        int dot = ap_rind(arg, '.');
+        if(dot > 0) /* if we have a suffix its a complete file */
+            conf->loader = arg;
+        else /* otherwise add the standard bytecode lines */
+            conf->loader = apr_pstrcat(pool, arg, ".pbc", NULL);
     }
     return NULL;
 }
 
-static const char * mod_parrot_add_language(cmd_parms *cmd, void * dummy, const char * compiler, const char * suffix) {
+/* Add a given language with a suffix to the table */
+static const char * mod_parrot_add_language(cmd_parms *cmd, void * dummy, 
+                                            const char * compiler, 
+                                            const char * suffix) {
     mod_parrot_conf * conf;
     conf = ap_get_module_config(cmd->server->module_config, &mod_parrot);
     if(conf) {
