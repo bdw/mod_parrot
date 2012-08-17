@@ -49,13 +49,15 @@ static const char * mod_parrot_set_loader(cmd_parms *cmd, void * dummy,
     mod_parrot_conf * conf = ap_get_module_config(cmd->server->module_config, 
                                                   &mod_parrot);
     /* if thisisnot a server configuration directive this is wrong */
-    apr_pool_t pool = cmd->server->process->pool;
+    apr_pool_t * pool = cmd->server->process->pool;
     if(conf) {
-        int dot = ap_rind(arg, '.');
+        char * dup = apr_pstrdup(pool, arg);
+        int dot = ap_rind(dup, '.');
+        ap_str_tolower(dup);
         if(dot > 0) /* if we have a suffix its a complete file */
-            conf->loader = arg;
+            conf->loader = dup;
         else /* otherwise add the standard bytecode lines */
-            conf->loader = apr_pstrcat(pool, arg, ".pbc", NULL);
+            conf->loader = apr_pstrcat(pool, dup, ".pbc", NULL);
     }
     return NULL;
 }
