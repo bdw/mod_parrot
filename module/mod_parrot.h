@@ -7,6 +7,8 @@
 #include "ap_mpm.h"
 #include "apr.h"
 #include "apr_strings.h"
+#include "apr_uri.h"
+
 /* here there be dragons */
 #include "parrot/api.h"
 #include "imcc/api.h"

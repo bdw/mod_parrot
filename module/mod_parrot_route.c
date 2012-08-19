@@ -4,6 +4,8 @@ extern module mod_parrot;
 
 mod_parrot_route * app_route(request_rec * req, mod_parrot_spec * spec) {
     /* we really should have some way to determine when we should handle it */
+    if(!spec->application)
+        return NULL;
     return NULL;
 }
 
@@ -41,9 +43,30 @@ mod_parrot_route * suffix_route(request_rec * req, mod_parrot_conf * conf) {
 
 /**
  * Parse a route 
+ *
+ * Proposed format:
+ * <language>://<relative-filename>(/(<Class>/)?(#<Routine>?))?
+ * or, the scheme specifies the language
+ * and the path after it the class 
+ * and the fragment specifies the routine 
+ *
+ * Thus:
+ * winxed://foo.winxed/#bar specifies the routine named bar in foo.winxed
+ * winxed://bar.winxed/Foo#bar specifies the bar method of a Foo object in bar.winxed
+ * perl6://quix.p6/Quam specifies an (invokable) instance of class Quam in quix.p6
+ * perl6://baz.p6/ specifies the main routine of baz.p6
  **/
-mod_parrot_route * mod_parrot_parse_route(apr_pool_t * req, const char * arg) {
-    return NULL;
+mod_parrot_route * mod_parrot_parse_route(apr_pool_t * pool, const char * arg) {
+    apr_uri_t uri;
+    mod_parrot_route * route;
+    if(apr_uri_parse(pool, arg, &uri) != APR_SUCCESS) 
+        return NULL;
+    route = apr_pcalloc(pool, sizeof(mod_parrot_route));
+    route->language = uri.scheme;
+    route->script = uri.hostname; /* this is relative */
+    route->className = (uri.path && strlen(uri.path) > 1) ? uri.path : NULL;
+    route->routine = uri.fragment;
+    return route;
 }
 
 /**
