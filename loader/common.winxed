@@ -57,6 +57,13 @@ namespace common {
         return obj;
     }
 
+    /* SOAPBOX: this should be a built-in people */
+    inline does(var obj, string role) return int {
+        int rv;
+        ${ does rv, obj, role };
+        return rv;
+    }
+
     /* this translates a 'normal' header' to a CGI-style header.
      * the string is a var because 'normal' strings are immutable.
      * Or something. */
@@ -94,8 +101,8 @@ namespace common {
         var routineName;
 
         function route(var args) {
-            self.scriptFile = args[0];
-            self.language = args[1];
+            self.language = args[0];
+            self.scriptFile = args[1];
             self.className = args[2];
             self.routineName = args[3];
         }
@@ -120,18 +127,18 @@ namespace common {
             }
             /* compreg doesn't throw an error */
             var compiler = compreg(self.language);
-            if(!compiler) {
-                throw new apache.error(500, 'Could not load compiler for ' + self.language);
+            if(compiler != null) {
+                /* we should specify that we want a packfile, but thats not
+                 * cross-compiler compatible */
+                return compiler.compile(source); 
             }
-            /* we should specify that we want a packfile, but thats not
-             * cross-compiler compatible */
-            return compiler.compile(source); 
+            throw new apache.error(500, 'Could not load compiler for ' + self.language);
         }        
 
         /* Invoke the route. This throws as many errors as the route is incorrect */
         function invoke[vtable](var arg) {
             var packfile = self.compile();
-            /* dispatch on what the route want */
+            /* dispatch on what the route wants */
             if(self.className) {
                 var obj = make(self.className);
                 if(self.routineName) try {
@@ -149,7 +156,7 @@ namespace common {
                     if(string(sub) == self.routineName)
                         return sub(arg);
                 }
-                throw new apache.error("Routine " + self.routineName + " not found in " + self.scriptFile);
+                throw new apache.error(500, "Routine " + self.routineName + " not found in " + self.scriptFile);
             } else {
                 var sub = packfile.main_sub();
                 return sub(arg);
@@ -211,11 +218,4 @@ namespace common {
         }
 
     }
-
-
-    function wrap(var route) {
-        say(typeof(route));
-        return {};
-    }
-
 }

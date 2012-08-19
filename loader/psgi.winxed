@@ -3,15 +3,17 @@ class apache.error;
 class apache.input;
 class apache.output;
 
-inline does(var obj, string role) return int {
-    int rv;
-    ${ does rv, obj, role };
-    return rv;
-}
 
 namespace psgi {
+    /* this should be a built-in people */
+    inline does(var obj, string role) return int {
+        int rv;
+        ${ does rv, obj, role };
+        return rv;
+    }
+
     function main[main](var args) {
-        run(args[1][0], args[1][1], new apache.output(args[0]), setup(args[0]));
+        run(args[1], new apache.output(args[0]), setup(args[0]));
     }
 
     class responder {
@@ -51,11 +53,10 @@ namespace psgi {
         }
     }
 
-    function run(string language, string fileName, var output, var env) {
+    function run(var arg, var output, var env) {
         try {
-            var byteCode = common.getBytecode(language, fileName);
-            var mainSub = byteCode.main_sub();
-            var returnValue = mainSub(env);
+            var route = new common.route(arg); 
+            var returnValue = route(env); 
             var response = new responder(output);
             if(does(returnValue, 'array') && elements(returnValue) == 3) {
                 response.writeHeader(returnValue[0], returnValue[1]);

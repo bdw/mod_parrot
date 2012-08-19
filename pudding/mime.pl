@@ -4,18 +4,22 @@ use Client;
 use Test::More tests => 2;
 use Data::Dumper;
 use config;
+use strict;
 
-$server = Server->new($config::HTTPD);
+my $server = Server->new($config::HTTPD);
 $server->loadModule(
     mod_parrot => $config::BUILDDIR . '/build/mod_parrot.so',
     mime_module => $config::INSTALLDIR . '/mod_mime.so',
 );
+
+
+
 $server->configure(
     ParrotLoader => 'echo.pbc',
     ParrotLoaderPath => $config::BUILDDIR . '/build',
     TypesConfig =>  'mime.types', # apparantly different distros disagree about this
 );
-$mime = <<MIME;
+my $mime = <<MIME;
 application/x-httpd-parrot wxd
 text/html html
 MIME

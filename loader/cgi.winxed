@@ -45,22 +45,19 @@ namespace cgi {
     }
 
 
-    function run(string language, string fileName) {
+    function run(var arg) {
+        var os = new OS; /* OS is loaded in common and hence available */
+        var route = new common.route(arg);
+        string back = os.cwd();
         try {
-            var os = new OS; /* OS is loaded in common and hence available */
-            var byteCode = common.getBytecode(language, fileName);
-            /* i might want to use a child interpreter instead of the current
-             * one for various interesting reasons. But not now */
-            var mainSub = byteCode.main_sub();
-            /* there is a very serious misfeature in the cgi specification.
-             * you see it here currently */
-            string back = os.cwd();
-            os.chdir(dirname(fileName)); /* as per CGI specificatoin */
-            mainSub([ fileName ]);
+            os.chdir(dirname(route.scriptFile));
+            route( route.scriptFile );
             os.chdir(back);
         } catch(error) {
+            /* at any rate, change back to the correct directory */
+            os.chdir(back); 
             if (error instanceof apache.error) {
-                error.report(); /* nice error reporting */
+                return error.report(); /* nice error reporting */
             } else {
                 throw error;
             }
@@ -86,7 +83,7 @@ namespace cgi {
 
     function main[main](var args) {
         setup(args[0]);
-        run(args[1][0], args[1][1]);
+        run(args[1]);
     }
 
 }
