@@ -14,15 +14,6 @@
 
 #define DEFAULT_LOADER "echo.pbc"
 
-/* Server configuration */
-typedef struct {
-  const char * loaderPath;
-  const char * loader;
-  apr_table_t * languages;
-} mod_parrot_conf;
-
-/* I still do want a directory configuration */
-
 /* Specify what script was requested. */
 typedef struct { 
     char * language;
@@ -30,6 +21,18 @@ typedef struct {
     char * className; /* for those who compile with c++ */
     char * routine;
 } mod_parrot_route;
+
+/* Server configuration */
+typedef struct {
+  const char * loaderPath;
+  const char * loader;
+  apr_table_t * languages;
+} mod_parrot_conf;
+
+/* Directory configuration */
+typedef struct {
+    mod_parrot_route * application;
+} mod_parrot_spec;
 
 
 #define MOD_PARROT_MIME_TYPE "application/x-httpd-parrot"
@@ -39,13 +42,14 @@ int mod_parrot_mpm_is_threaded();
 
 /* determine if and how a request should be handled */
 mod_parrot_route * mod_parrot_find_route(request_rec * req);
+mod_parrot_route * mod_parrot_parse_route(apr_pool_t * pool, const char * arg);
 
 /* IO */
 int mod_parrot_write(void * buf, size_t size, request_rec *req);
 int mod_parrot_read(void * buf, size_t size, request_rec * req);
 
 /* interpreter interface */
-Parrot_PMC mod_parrot_acquire_interpreter(server_rec * srv);
+ Parrot_PMC mod_parrot_acquire_interpreter(server_rec * srv);
 void mod_parrot_release_interpreter(server_rec * srv, Parrot_PMC interp_pmc);
 
 /* Run and report */

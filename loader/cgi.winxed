@@ -4,6 +4,7 @@ class Env;
 class apache.output;
 class apache.input;
 class apache.error;
+class common.route;
 
 namespace cgi {
     class output : apache.output {

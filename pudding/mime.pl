@@ -30,8 +30,8 @@ $server->start();
 
 Client::setup($server);
 # todo, determine the compiler
-like(content('foo.wxd'), qr/Loading compiler/);
-like(content('foo.wxd'), qr/foo\.wxd/);
+like(content('foo.wxd'), qr/Loading compiler/, 'echo loader is invoked');
+like(content('foo.wxd'), qr/foo\.wxd/, 'correct file is seen');
 
 $server->stop();
 print $server->errors;

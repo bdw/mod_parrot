@@ -2,7 +2,7 @@
 use Server;
 use Client;
 use config;
-use Test::More tests => 8;
+use Test::More tests => 9;
 use Time::HiRes qw(time);
 use strict;
 
@@ -51,14 +51,16 @@ $server->serve("delay.wxd", $delayed, 0755);
 $server->serve('streaming.wxd', $streaming, 0755);
 $server->start();
 Client::setup($server);
-is(content("hello.wxd"), "this is a sample psgi app");
-is(status("hello.wxd"), 203);
-is(headers("hello.wxd")->{'x-hello'}, 'world');
-is(content('delay.wxd'), "a delayed response");
-is(headers('delay.wxd')->{'x-hello'}, 'world');
-is(status('delay.wxd'), 203);
+
+is(content("hello.wxd"), "this is a sample psgi app", 'hello world works');
+isnt(content("hello.wxd"), "im not in output", 'stdout is not send to client');
+is(status("hello.wxd"), 203, 'status is set');
+is(headers("hello.wxd")->{'x-hello'}, 'world', 'header is set');
+is(content('delay.wxd'), "a delayed response", 'delayed response works');
+is(headers('delay.wxd')->{'x-hello'}, 'world', 'header is also set on a delayed response');
+is(status('delay.wxd'), 203, 'status in a delayed response' );
 my $now = time;
-is(content('streaming.wxd'), 'after a while');
+is(content('streaming.wxd'), 'after a while', 'script can wait a bit');
 my $then = time;
-ok($then - $now > 0.5);
+ok($then - $now > 0.5, 'and it takes that time');
 
