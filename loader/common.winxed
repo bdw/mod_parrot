@@ -8,7 +8,8 @@ class FileHandle;
 class apache.error;
 
 namespace common {
-
+    const string MODULE_GLOBALS = "mod_parrot.globals";
+    /* inline string handling functions */
     inline find_cclass(int cclass, string s, int startIdx, int length)
         return int {
         int idx;
@@ -22,8 +23,20 @@ namespace common {
         ${ find_not_cclass idx, cclass, s, startIdx, length };
         return idx;
     }
-    const string MODULE_GLOBALS = "mod_parrot.globals";
 
+    inline index(string haystack, string needle) return int {
+ 	    int i;
+	    ${ index i, haystack, needle };
+	    return i;
+    }
+
+    inline rindex(string haystack, string needle, int start) return int {
+        int i;
+        ${ rindex i, haystack, needle, start };
+        return i;
+    }
+
+    /* currently useless nonsense, but i wanted to put a NCI cache here  */
     inline set_global(string name, var value)
         return var {
         ${ set_global name, value };
@@ -36,15 +49,17 @@ namespace common {
         return value;
     }
 
-    /* i don't know which of those tags does the trick
-     * but one does */
-    function init[anon, load, init]() {
-        loadlib('os');
-        loadlib('file');
-        load_bytecode('osutils.pbc');
-        set_global(MODULE_GLOBALS, {});
+    /* winxed is not fond of non-constant strings in new declarations,
+     * hence this method */
+    inline make(var classKey) return var {
+        var obj;
+        ${ new obj, classKey };
+        return obj;
     }
 
+    /* this translates a 'normal' header' to a CGI-style header.
+     * the string is a var because 'normal' strings are immutable.
+     * Or something. */
     function cgiify(var value) {
         for(int i = 0; i < length(value); i++) {
             i = find_not_cclass(CCLASS_ALPHANUMERIC, value,
@@ -57,32 +72,146 @@ namespace common {
             return value;
         return "HTTP_" + string(value);
     }
-
+    
     function cut_number(string s) {
         int i = find_cclass(CCLASS_NUMERIC, s, 0, length(s));
         int j = find_not_cclass(CCLASS_NUMERIC, s, i, length(s)-i);
         return int(substr(s, i, j - i));
     }
 
-    function getBytecode(string language, string fileName) {
-        var os = new OS;
-        var file = new File;
-        load_language(language);
-        var compiler = compreg(language);
-        if(compiler == null) {
-            throw new apache.error(500, 'Cannot load compiler for ' + language);
-        }
-        if(!file.exists(fileName)) {
-            throw new apache.error(404, fileName + " not found");
-        }
-        if(os.can_read(fileName) && os.can_execute(fileName)) {
-            var handle = new FileHandle;
-            handle.open(fileName, "r");
-            return compiler.compile(handle.readall());
-        } else {
-            throw new apache.error(403, "Cannot execute " + fileName);
-        }
+    /* This code must load at initialization */
+    function init[anon, load, init]() {
+        loadlib('os');
+        loadlib('file');
+        load_bytecode('osutils.pbc');
+        set_global(MODULE_GLOBALS, {});
     }
+
+    class route {
+        var scriptFile;
+        var language;
+        var className;
+        var routineName;
+
+        function route(var args) {
+            self.scriptFile = args[0];
+            self.language = args[1];
+            self.className = args[2];
+            self.routineName = args[3];
+        }
+
+        /** return PackfileView bytecode */
+        function compile() {
+            if(!self.scriptFile) {
+                /* this should not happen, must be a configuration error */
+                throw new apache.error(500, 'Cannot resolve route (no script file given)');
+            }
+            /* bytecode caching goes here */
+            /* get its contents early, because we may have to inspect it. */
+            string source = self.readScript(self.scriptFile);
+            if(!self.language) {
+                self.language = self.determineLanguage(self.scriptFile, source);
+            } else try {
+                /* load_language throws an error, which is handy for me */
+                load_language(self.language);
+            } catch(error) { 
+                /* but i translate it never the less */
+                throw new apache.error(500, 'Could not load langauge ' + self.language);
+            }
+            /* compreg doesn't throw an error */
+            var compiler = compreg(self.language);
+            if(!compiler) {
+                throw new apache.error(500, 'Could not load compiler for ' + self.language);
+            }
+            /* we should specify that we want a packfile, but thats not
+             * cross-compiler compatible */
+            return compiler.compile(source); 
+        }        
+
+        /* Invoke the route. This throws as many errors as the route is incorrect */
+        function invoke[vtable](var arg) {
+            var packfile = self.compile();
+            /* dispatch on what the route want */
+            if(self.className) {
+                var obj = make(self.className);
+                if(self.routineName) try {
+                    var method = find_method(obj, self.routineName);
+                    return method(obj, arg); /* object is invocant */
+                } catch(error) {
+                    throw new apache.error(500, "Could not invoke method " + self.routineName + " of class " + self.className);
+                } else if(does(obj, 'invokable')) {
+                    return obj(arg);
+                } else {
+                    throw new apache.error(500, "Could not invoke object of class " + self.className);
+                }
+            } else if(self.routineName) {
+                for(var sub in packfile.all_subs()) {
+                    if(string(sub) == self.routineName)
+                        return sub(arg);
+                }
+                throw new apache.error("Routine " + self.routineName + " not found in " + self.scriptFile);
+            } else {
+                var sub = packfile.main_sub();
+                return sub(arg);
+            }
+        }
+        
+        /* there are two methods of determining the language from the file:
+         * from the suffix, or from the shebang */
+        function determineLanguage(string fileName, string source) {
+	        int i = index(fileName, '.');
+            if(i > 0) {
+	            string suffix = substr(fileName, i + 1);
+	            try {
+		            load_language(suffix);
+		            return suffix;
+	            } catch(error) {}
+            }
+
+            /* try to find the last word of a shebang, and use it as
+             * language */
+	        if(substr(source, 0, 2) == "#!") {
+                int nl = index(source, "\n");
+                if(nl > 0) {
+                    int start = rindex(source, "/", nl);
+                    if(start < 0) 
+                        start = rindex(source, " ", nl);
+                    string lastWord = substr(source, start + 1, nl - start - 1);
+                    try { 
+                        load_language(lastWord); 
+                        return lastWord; 
+                    } catch(error) {}
+                }
+	        }
+            throw new apache.error(500, "Could not determine language for " + fileName);
+        }
+
+
+        /* This function checks whether its argument is executable
+         * according to the filesystem. */
+        function readScript(string fileName) {
+            var os = new OS;
+            var file = new File; /* silly singletons */
+            if(!file.exists(fileName)) {
+                throw new apache.error(404, fileName + " not found");
+            }
+            /* This check for executability. Executing files that should
+             * not be executed (from uploads etc) is a very common cause of
+             * web application vulnerabilities */
+            if(os.can_read(fileName) && os.can_execute(fileName)) {
+                var handle = new FileHandle;
+                handle.open(fileName, "r");
+                string source = handle.readall();
+                handle.close(); /* i'm making this explicit */
+                return source;
+            } else {
+                throw new apache.error(403, 'Cannot read or execute' + fileName);
+            }
+            
+        }
+
+    }
+
 
     function wrap(var route) {
         say(typeof(route));
