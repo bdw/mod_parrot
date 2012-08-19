@@ -12,8 +12,6 @@ $server->loadModule(
     mime_module => $config::INSTALLDIR . '/mod_mime.so',
 );
 
-
-
 $server->configure(
     ParrotLoader => 'echo.pbc',
     ParrotLoaderPath => $config::BUILDDIR . '/build',

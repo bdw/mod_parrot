@@ -7,17 +7,18 @@ extern module mod_parrot;
 /* not portable! */
 int file_exists(char * path) {
     struct stat buf;
-    return !stat(path, &buf);
+    if(stat(path, &buf)) /* file is not stat-able */
+        return 0;
+    return buf.st_mode != S_IFDIR;
 }
 
 mod_parrot_route * app_route(request_rec * req, mod_parrot_spec * spec) {
     mod_parrot_route * route;
-    /* handle it if we have a specified application and the file does not exist 
-     * or the file requested is the specified script for the application */
     if(!spec->application)
         return NULL;
-    if(file_exists(req->filename) && 
-       strcmp(req->filename, spec->application->script))
+    /* handle it if we have a specified application and the file does not exist 
+     * or the file requested is the specified script for the application */
+    if(file_exists(req->filename) && strcmp(req->filename, spec->application->script))
         return NULL; /* other file than the requested script, 
                         we shouldn't handle it */
     route = apr_pcalloc(req->pool, sizeof(mod_parrot_route));
@@ -64,6 +65,24 @@ mod_parrot_route * suffix_route(request_rec * req, mod_parrot_conf * conf) {
     }
 }
 
+void route_dump(mod_parrot_route * route) {
+    if(route->language)
+        printf("Language is %s\n", route->language);
+    else
+        puts("Langauge is null");
+    if(route->script) 
+        printf("Script is %s\n", route->script);
+    else
+        puts("Script is null");
+    if(route->className) 
+        printf("Class name is %s\n", route->className);
+    else
+        puts("Class name is null");
+    if(route->routine)
+        printf("Routine name is %s\n", route->routine);
+    else
+        puts("Routine name is null");
+}
 
 /**
  * Parse a route 
@@ -91,7 +110,7 @@ mod_parrot_route * mod_parrot_parse_route(apr_pool_t * pool, const char * arg) {
     /* ignore the first slash */
     route->className = (uri.path && strlen(uri.path) > 1) ? (uri.path + 1) : NULL;
     /* and the hash of the fragment */
-    route->routine = (uri.fragment && strlen(uri.fragment) > 1) ? (uri.fragment + 1) : NULL;
+    route->routine = (uri.fragment && strlen(uri.fragment) > 0) ? (uri.fragment) : NULL;
     return route;
 }
 

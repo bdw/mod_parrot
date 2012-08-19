@@ -32,7 +32,7 @@ sub writeconf {
     if(ref (my $options = $conf{Options}) eq 'HASH') {
         print $out $_, $conf{Options}->{$_} for keys(%$options);
     }
-
+    print $out $conf{RawOptions} if (defined $conf{RawOptions});
 	close $out;
 	return $filename;
 }
@@ -89,8 +89,14 @@ Restart the web server if needed
 =cut
 
 sub configure {
-    my ($self, %opts) = @_;
-    $self->{Options}->{$_} = $opts{$_} for keys (%opts);
+    my $self = shift;
+    if(@_ > 1) {
+        my %opts = @_;
+        $self->{Options}->{$_} = $opts{$_} for keys (%opts);
+    } else {
+        my $raw = shift;
+        $self->{RawOptions} = $raw;
+    }
     $self->restart() if $self->{Pid};
 }
 
