@@ -6,6 +6,7 @@
 #include "ap_config.h"
 #include "ap_mpm.h"
 #include "apr.h"
+#include "apr_file_info.h"
 #include "apr_strings.h"
 #include "apr_uri.h"
 

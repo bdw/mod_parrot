@@ -4,28 +4,34 @@
 
 extern module mod_parrot;
 
-/* not portable! */
-int file_exists(char * path) {
-    struct stat buf;
-    if(stat(path, &buf)) /* file is not stat-able */
+
+int file_exists(apr_pool_t * pool, char * path) {
+    apr_finfo_t finfo;
+    if(apr_stat(&finfo, path, APR_FINFO_TYPE, pool) != APR_SUCCESS) {
         return 0;
-    return buf.st_mode != S_IFDIR;
+    }
+    return (finfo.filetype == APR_REG);
 }
 
 mod_parrot_route * app_route(request_rec * req, mod_parrot_spec * spec) {
     mod_parrot_route * route;
-    if(!spec->application)
+    if(!spec->application) 
         return NULL;
     /* handle it if we have a specified application and the file does not exist 
      * or the file requested is the specified script for the application */
-    if(file_exists(req->filename) && strcmp(req->filename, spec->application->script))
+    if(file_exists(req->pool, req->filename) && 
+       strcmp(req->filename, spec->application->script))
         return NULL; /* other file than the requested script, 
                         we shouldn't handle it */
     route = apr_pcalloc(req->pool, sizeof(mod_parrot_route));
     route->language = spec->application->language;
     if(spec->application->script) { /* append the script to the directory to find the relative path */
         char * path = apr_pstrdup(req->pool, req->filename);
-        route->script = apr_pstrcat(req->pool, dirname(path), "/", spec->application->script, NULL);
+        int len = strlen(path);
+        if(path[len-1] == '/')
+            route->script = apr_pstrcat(req->pool, path, spec->application->script, NULL);
+        else
+            route->script = apr_pstrcat(req->pool, dirname(path), "/", spec->application->script, NULL);
     } else { /* use the filename */
         route->script = req->filename;
     }

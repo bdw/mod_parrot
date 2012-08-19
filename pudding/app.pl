@@ -11,12 +11,13 @@ $server->loadModule(
 );
 
 my $conf = <<CONF;
-ParrotLoader psgi
+ParrotLoader psgi.pbc
 ParrotLoaderPath $config::BUILDDIR/build
 
-<Directory "{$server->{DocumentRoot}}/">
+<Location "/">
+    ErrorDocument 404 "special 404"
     ParrotApplication winxed://hello.wxd/Greeter#hello
-</Directory>
+</Location>
 CONF
 
 $server->configure($conf);
@@ -29,8 +30,8 @@ class Greeter {
 }
 WINXED
 
-$server->serve('foo.wxd', $winxed);
-$server->debug();
+$server->serve('hello.wxd', $winxed, 0755);
+$server->start();
 Client::setup($server);
 is(content(''), 'Hello World!', 'yay for directory loading');
 ok(0, 'false');

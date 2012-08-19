@@ -21,7 +21,7 @@ $server->start();
 Client::setup($server);
 is(status('foobar.winxed'), 203, 'custom header code');
 is(status('foobar.wxd'), 203, 'also on a different registered suffix');
-like(content('foobar.winxed'), qr/Loading compiler winxed/, 'it should mention we are loading winxed');
+like(content('foobar.winxed'), qr/Requested route winxed/, 'it should mention we are loading winxed');
 like(headers('foobar.winxed')->{'x-echo-user-agent'}, qr/HTTP-Tiny/, 'and it should echo our headers');
 is(status('foobar.html'), 200, 'regular files should be served');
 

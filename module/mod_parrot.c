@@ -21,6 +21,8 @@ static apr_status_t mod_parrot_handler(request_rec *req) {
     return DECLINED;
 }
 
+
+
 /* server configuration */
 static void * mod_parrot_create_config(apr_pool_t * pool, server_rec * server) {
     mod_parrot_conf * conf = apr_pcalloc(pool, sizeof(mod_parrot_conf));
@@ -32,11 +34,26 @@ static void * mod_parrot_create_config(apr_pool_t * pool, server_rec * server) {
     return conf;
 }
 
+static void * mod_parrot_merge_config(apr_pool_t * pool, void * base, void * add) {
+    return NULL;
+}
+
 /* directory configuration */
 static void * mod_parrot_create_spec(apr_pool_t * pool, char * context) {
     /* ignore context! mu ha */
     mod_parrot_spec * spec = apr_pcalloc(pool, sizeof(mod_parrot_conf));
     return spec;
+}
+
+static void * mod_parrot_merge_spec(apr_pool_t * pool, void * base, void * add) {
+    mod_parrot_spec * parent = base;
+    mod_parrot_spec * child = add;
+    mod_parrot_spec * merged = mod_parrot_create_spec(pool, "merged spec");
+    if(parent->application)
+        merged->application = parent->application;
+    if(child->application) 
+        merged->application = child->application;
+    return merged;
 }
 
 static const char * mod_parrot_set_application(cmd_parms *cmd,  void * conf, const char * arg) {
@@ -93,9 +110,9 @@ static command_rec mod_parrot_directives[] = {
 module mod_parrot = {
 	STANDARD20_MODULE_STUFF,
 	mod_parrot_create_spec,
-	NULL,
+	mod_parrot_merge_spec,
 	mod_parrot_create_config,
-	NULL,
+	mod_parrot_merge_config,
 	mod_parrot_directives, 
 	mod_parrot_register_hooks
 };
