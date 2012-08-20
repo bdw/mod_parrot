@@ -28,7 +28,7 @@ typedef struct {
 /* Server configuration */
 typedef struct {
   const char * loaderPath;
-  const char * loader;
+  char * loader;
   apr_table_t * languages;
 } mod_parrot_conf;
 

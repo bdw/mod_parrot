@@ -4,14 +4,16 @@ use Client;
 use config;
 use Data::Dumper;
 use Test::More tests => 7;
+
 my $server = new Server($config::HTTPD);
 $server->loadModule(
     mod_parrot => $config::BUILDDIR . '/build/mod_parrot.so',
 );
+
 $server->configure(
     ParrotLanguage => 'winxed .winxed .wxd',
     ParrotLoaderPath => $config::BUILDDIR .'/build/',
-    ParrotLoader => 'echo.pbc',
+    ParrotLoader => 'ECHO',
 );
 my $doc = <<HTML;
 <html><head><title>Hi!</title></head><body><p>Hello</p></body></html>
