@@ -135,11 +135,19 @@ namespace common {
             throw new apache.error(500, 'Could not load compiler for ' + self.language);
         }        
 
+        function prepare(var packfile) {
+            /* just the kind of guy I am */
+            var func = dlfunc(null, "Parrot_pf_prepare_packfile_init", "vpP");
+            func(getinterp(), packfile); /* mu ha */
+        }
+
         /* Invoke the route. This throws as many errors as the route is incorrect */
         function invoke[vtable](var arg) {
             var packfile = self.compile();
+            self.prepare(packfile);
             /* dispatch on what the route wants */
             if(self.className) {
+                var sub = packfile.main_sub();
                 var obj = make(self.className);
                 if(self.routineName) try {
                     var method = find_method(obj, self.routineName);
