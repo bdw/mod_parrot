@@ -3,6 +3,9 @@ class ByteBuffer;
 class StringBuilder;
 class Exception;
 
+$include_const "except_types.pasm";
+
+
 namespace apache {
     class output {
         var request;
@@ -132,19 +135,9 @@ namespace apache {
     }
 
     class error : Exception {
-        var code;
-        var msg;
         function error(int code, string msg) {
-            self.code = code;
-            self.msg = msg;
-        }
-
-        function report() {
-            var out = getstdout();
-            if(out instanceof output) {
-                out.status(self.code);
-            }
-            getstderr().print(string(self.msg) + "\n");
+            self =: code; /* real elegant i know */
+            self.message = msg;
         }
     }
 

@@ -155,21 +155,27 @@ apr_status_t mod_parrot_run(Parrot_PMC interp_pmc, request_rec *request,
  * @param request_rec * req The request on which the error occured. 
  * @return int the http code of the error (HTTP_INTERNAL_SERVER_ERROR)
  **/
-apr_status_t mod_parrot_report(Parrot_PMC interp, request_rec *req) {
-  Parrot_Int is_error, exit_code;
-  Parrot_PMC exception;
-  Parrot_String error_message, backtrace;
-  if (Parrot_api_get_result(interp, &is_error, &exception, &exit_code, &error_message) && is_error) {
-      /* do something useful on the basis of this information */
-      char *rrmsg,  *bcktrc;
-      Parrot_api_get_exception_backtrace(interp, exception, &backtrace);
-      Parrot_api_string_export_ascii(interp, error_message, &rrmsg);
-      Parrot_api_string_export_ascii(interp, backtrace, &bcktrc);
-      fputs(rrmsg, stderr);
-      fputs(bcktrc, stderr);
+apr_status_t mod_parrot_report(Parrot_PMC interp_pmc, request_rec *req) {
+  Parrot_Int is_error = 0, exit_code = 0;
+  Parrot_PMC exception_pmc;
+  Parrot_String error_str, backtrace_str;
+  Parrot_Int status = Parrot_api_get_result(interp_pmc, &is_error, 
+                                            &exception_pmc, &exit_code, &error_str);
+  if(status && is_error) {
+      /* report the error  */
+      char *error,  *backtrace;
+      Parrot_api_get_exception_backtrace(interp_pmc, exception_pmc, &backtrace_str);
+      Parrot_api_string_export_ascii(interp_pmc, error_str, &error);
+      Parrot_api_string_export_ascii(interp_pmc, backtrace_str, &backtrace);
+      /* print them to the log */
+      fputs(error, stderr);
+      fputs(backtrace, stderr);
+      /* free the exported string */
+      Parrot_api_string_free_exported_ascii(interp_pmc, error);
+      Parrot_api_string_free_exported_ascii(interp_pmc, backtrace);
+      /* oh, and get the real exit code */
+      Parrot_api_pmc_get_integer(interp_pmc, exception_pmc, &exit_code);
   }
-  /**
-   * This right here, is pretty much wrong 
-   **/
-  return HTTP_INTERNAL_SERVER_ERROR;
+  return (exit_code > 100 ? exit_code : 
+          (is_error ? HTTP_INTERNAL_SERVER_ERROR : OK));
 }

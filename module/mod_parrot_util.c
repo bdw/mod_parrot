@@ -8,6 +8,12 @@ int mod_parrot_mpm_is_threaded() {
 }
 
 
+int mod_parrot_get_exit_code(Parrot_PMC interp_pmc, Parrot_PMC exception_pmc) {
+    Parrot_Interp interp = Parrot_interp_get_from_pmc(interp_pmc);
+    STRING * key = Parrot_str_new_constant(interp, "exit_code");
+    return VTABLE_get_integer_keyed_str(interp, exception_pmc, key);
+}
+
 void mod_parrot_eval(Parrot_PMC interp_pmc, Parrot_PMC bytecode_pmc, 
                      Parrot_PMC argument_pmc) {
     if(!Parrot_api_run_bytecode(interp_pmc, bytecode_pmc, argument_pmc)) {
@@ -25,6 +31,8 @@ void mod_parrot_eval(Parrot_PMC interp_pmc, Parrot_PMC bytecode_pmc,
         Parrot_ex_throw_from_c(interp, exception_pmc);
     }
 }
+
+
 
 Parrot_PMC mod_parrot_array_new(Parrot_PMC interp_pmc) {
     Parrot_Interp interp = Parrot_interp_get_from_pmc(interp_pmc);

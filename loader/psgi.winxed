@@ -54,24 +54,16 @@ namespace psgi {
     }
 
     function run(var arg, var output, var env) {
-        try {
-            var route = new common.route(arg); 
-            var returnValue = route(env); 
-            var response = new responder(output);
-            if(does(returnValue, 'array') && elements(returnValue) == 3) {
-                response.writeHeader(returnValue[0], returnValue[1]);
-                response.writeBody(returnValue[2]);
-            } else if(does(returnValue, 'invokable')) {
-                returnValue(response);
-            } else {
-                throw new apache.error(500, 'Nonsense return value from PSGI application')
-            }
-        } catch(error) {
-            if(error instanceof apache.error) {
-                error.report();
-            } else {
-                throw error;
-            }
+        var route = new common.route(arg); 
+        var returnValue = route(env); 
+        var response = new responder(output);
+        if(does(returnValue, 'array') && elements(returnValue) == 3) {
+            response.writeHeader(returnValue[0], returnValue[1]);
+            response.writeBody(returnValue[2]);
+        } else if(does(returnValue, 'invokable')) {
+            returnValue(response);
+        } else {
+            throw new apache.error(500, 'Nonsense return value from PSGI application')
         }
     }
 

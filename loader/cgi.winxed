@@ -30,7 +30,8 @@ namespace cgi {
                             self.status(common.cut_number(val));
                         else
                             self.header(key, val);
-                    } else { // it is either the end of headers or a
+                    } else { 
+                        // it is either the end of headers or a
                         // content line
                         if(length(payload) > 0)
                             unshift(lines, payload);
@@ -57,11 +58,8 @@ namespace cgi {
         } catch(error) {
             /* at any rate, change back to the correct directory */
             os.chdir(back); 
-            if (error instanceof apache.error) {
-                return error.report(); /* nice error reporting */
-            } else {
-                throw error;
-            }
+            /* and then rethrow */
+            throw error;
         }
     }
 

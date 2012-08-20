@@ -89,4 +89,4 @@ is(content('queryString.wxd?foo=bar'), 'foo=bar', 'i should have a query string'
 # errors
 is(status('unexecutable.winxed'), 403, 'not executable');
 is(status('does-not-exist.winxed'), 404, 'not found');
-
+print content('does-not-exist.winxed');
